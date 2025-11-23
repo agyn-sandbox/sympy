@@ -5,10 +5,12 @@ import sys
 import builtins
 import types
 
+from sympy import sympify
 from sympy.assumptions import Q
-from sympy.core import Symbol, Function, Float, Rational, Integer, I, Mul, Pow, Eq
+from sympy.core import Symbol, Function, Float, Rational, Integer, I, Mul, Pow
+from sympy.core.relational import Eq, Ne, Lt, Le, Gt, Ge
 from sympy.functions import exp, factorial, factorial2, sin, Min, Max
-from sympy.logic import And
+from sympy.logic import And, Or
 from sympy.series import Limit
 from sympy.testing.pytest import raises, skip
 
@@ -207,6 +209,45 @@ def test_function_evaluate_false():
         assert case == str(expr) != str(expr.doit())
     assert str(parse_expr('ln(0)', evaluate=False)) == 'log(0)'
     assert str(parse_expr('cbrt(0)', evaluate=False)) == '0**(1/3)'
+
+
+def test_relationals_evaluate_false():
+    assert parse_expr('1 < 2', evaluate=False) == Lt(1, 2, evaluate=False)
+    assert parse_expr('1 <= 2', evaluate=False) == Le(1, 2, evaluate=False)
+    assert parse_expr('2 > 1', evaluate=False) == Gt(2, 1, evaluate=False)
+    assert parse_expr('2 >= 1', evaluate=False) == Ge(2, 1, evaluate=False)
+    assert parse_expr('1 == 1', evaluate=False) == Eq(1, 1, evaluate=False)
+    assert parse_expr('1 != 0', evaluate=False) == Ne(1, 0, evaluate=False)
+    assert sympify('1 < 2', evaluate=False) == Lt(1, 2, evaluate=False)
+
+
+def test_chained_relationals_evaluate_false():
+    a = Symbol('a')
+    b = Symbol('b')
+    c = Symbol('c')
+    expected = And(
+        Lt(a, b, evaluate=False),
+        Lt(b, c, evaluate=False),
+        evaluate=False
+    )
+    assert parse_expr('a < b < c', evaluate=False) == expected
+
+    x = Symbol('x')
+    y = Symbol('y')
+    z = Symbol('z')
+    expected_and = And(
+        Lt(x, y, evaluate=False),
+        Lt(y, z, evaluate=False),
+        evaluate=False
+    )
+    assert parse_expr('(x < y) & (y < z)', evaluate=False) == expected_and
+
+    expected_or = Or(
+        Lt(x, y, evaluate=False),
+        Lt(y, z, evaluate=False),
+        evaluate=False
+    )
+    assert parse_expr('(x < y) | (y < z)', evaluate=False) == expected_or
 
 
 def test_issue_10773():

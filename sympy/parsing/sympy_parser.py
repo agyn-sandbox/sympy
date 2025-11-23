@@ -1110,13 +1110,21 @@ class EvaluateFalseTransformer(ast.NodeTransformer):
         ast.BitAnd: 'And',
         ast.BitXor: 'Not',
     }
+    compare_operators = {
+        ast.Eq: 'Eq',
+        ast.NotEq: 'Ne',
+        ast.Lt: 'Lt',
+        ast.LtE: 'Le',
+        ast.Gt: 'Gt',
+        ast.GtE: 'Ge',
+    }
     functions = (
         'Abs', 'im', 're', 'sign', 'arg', 'conjugate',
         'acos', 'acot', 'acsc', 'asec', 'asin', 'atan',
         'acosh', 'acoth', 'acsch', 'asech', 'asinh', 'atanh',
         'cos', 'cot', 'csc', 'sec', 'sin', 'tan',
         'cosh', 'coth', 'csch', 'sech', 'sinh', 'tanh',
-        'exp', 'ln', 'log', 'sqrt', 'cbrt',
+        'exp', 'ln', 'log', 'sqrt', 'cbrt', 'Eq', 'Ne', 'Lt', 'Le', 'Gt', 'Ge',
     )
 
     def flatten(self, args, func):
@@ -1133,6 +1141,37 @@ class EvaluateFalseTransformer(ast.NodeTransformer):
             else:
                 result.append(arg)
         return result
+
+    def visit_Compare(self, node):
+        left = self.visit(node.left)
+        comparators = [self.visit(comp) for comp in node.comparators]
+
+        relations = []
+        current_left = left
+        for operator, right in zip(node.ops, comparators):
+            sympy_class = self.compare_operators.get(operator.__class__)
+            if sympy_class is None:
+                return ast.Compare(left=left, ops=node.ops, comparators=comparators)
+            relation = ast.Call(
+                func=ast.Name(id=sympy_class, ctx=ast.Load()),
+                args=[current_left, right],
+                keywords=[ast.keyword(arg='evaluate', value=ast.NameConstant(value=False, ctx=ast.Load()))],
+                starargs=None,
+                kwargs=None
+            )
+            relations.append(relation)
+            current_left = right
+
+        if len(relations) == 1:
+            return relations[0]
+
+        return ast.Call(
+            func=ast.Name(id='And', ctx=ast.Load()),
+            args=relations,
+            keywords=[ast.keyword(arg='evaluate', value=ast.NameConstant(value=False, ctx=ast.Load()))],
+            starargs=None,
+            kwargs=None
+        )
 
     def visit_BinOp(self, node):
         if node.op.__class__ in self.operators:
