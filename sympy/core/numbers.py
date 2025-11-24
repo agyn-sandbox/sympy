@@ -1627,11 +1627,6 @@ class Rational(Number):
 
         _deferred_mult = None
 
-        p_orig = p
-        q_orig = q
-
-        rp = None
-
         if not isinstance(p, SYMPY_INTS):
             rp = Rational(p)
             if isinstance(q, str):
@@ -1651,23 +1646,6 @@ class Rational(Number):
             q = q_val
         else:
             q = int(q)
-
-        p_is_float = isinstance(p_orig, float)
-        q_is_float = isinstance(q_orig, float)
-
-        if _deferred_mult is None and p_is_float and q_is_float:
-            rp_for_scale = rp if rp is not None else Rational(p_orig)
-            if rp_for_scale.p != 0:
-                mant_bits = sys.float_info.mant_dig - 2
-                scale_mul = int(round(rp_for_scale.q / abs(rp_for_scale.p)))
-                if scale_mul == 0:
-                    scale_mul = 1
-                scale = scale_mul * (1 << mant_bits)
-                decimal_scale = fractions.Fraction(str(p_orig)).denominator
-                if decimal_scale:
-                    scale = math.lcm(scale, decimal_scale)
-                p = int(round(p_orig * scale))
-                q = int(round(q_orig * scale))
 
         # p and q are now ints
         if q == 0:

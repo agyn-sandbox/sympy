@@ -380,10 +380,13 @@ def test_Rational_two_arg_mixed_types():
             assert lhs == rhs
 
     r = Rational(0.2, 0.3333333333333333)
-    assert r.as_numer_denom() == (2251799813685248, 3752999689475413)
+    assert r.as_numer_denom() == (3602879701896397, 6004799503160661)
 
     r2 = Rational(0.6666666666666666, 0.2)
-    assert r2.as_numer_denom() == (3333333333333333, 1000000000000000)
+    assert r2.as_numer_denom() == (12009599006321322, 3602879701896397)
+
+    r3 = Rational(3.0, 0.2)
+    assert r3.as_numer_denom() == (54043195528445952, 3602879701896397)
 
     raises(TypeError, lambda: Rational('3**3', 2))
     raises(TypeError, lambda: Rational(1, '1/2 + 2/3'))
