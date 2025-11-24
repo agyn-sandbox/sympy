@@ -379,6 +379,9 @@ def test_Rational_two_arg_mixed_types():
             rhs = Rational(f"{p}/{q}").as_numer_denom()
             assert lhs == rhs
 
+    r = Rational(0.2, 0.3333333333333333)
+    assert r.as_numer_denom() == (2251799813685248, 3752999689475413)
+
     raises(TypeError, lambda: Rational('3**3', 2))
     raises(TypeError, lambda: Rational(1, '1/2 + 2/3'))
 
