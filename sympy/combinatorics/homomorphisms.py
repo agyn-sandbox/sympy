@@ -325,7 +325,6 @@ def _check_homomorphism(domain, codomain, images):
         perm_generators = list(domain.generators)
         perm_images = [images.get(gen, identity) for gen in perm_generators]
         inv_images = [img**-1 for img in perm_images]
-        token_map = {}
         for idx, symbol in enumerate(gens):
             token_map[symbol] = (idx, 1)
             token_map[symbol**-1] = (idx, -1)
@@ -344,7 +343,7 @@ def _check_homomorphism(domain, codomain, images):
                 idx, sign = token_map[token]
                 factor = perm_images[idx] if sign == 1 else inv_images[idx]
                 for _ in range(abs(power)):
-                    w = factor*w
+                    w = w*factor
                 i += abs(power)
                 j += 1
             return w
