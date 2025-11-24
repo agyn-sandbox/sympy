@@ -370,6 +370,28 @@ def test_Rational_new():
     assert n.p == -2
 
 
+def test_Rational_two_arg_mixed_types():
+    assert Rational('0.5', '100') == Rational(1, 200)
+
+    for p in ('1.5', 1.5, 2):
+        for q in ('1.5', 1.5, 2):
+            lhs = Rational(p, q).as_numer_denom()
+            rhs = Rational(f"{p}/{q}").as_numer_denom()
+            assert lhs == rhs
+
+    r = Rational(0.2, 0.3333333333333333)
+    assert r.as_numer_denom() == (3602879701896397, 6004799503160661)
+
+    r2 = Rational(0.6666666666666666, 0.2)
+    assert r2.as_numer_denom() == (12009599006321322, 3602879701896397)
+
+    r3 = Rational(3.0, 0.2)
+    assert r3.as_numer_denom() == (54043195528445952, 3602879701896397)
+
+    raises(TypeError, lambda: Rational('3**3', 2))
+    raises(TypeError, lambda: Rational(1, '1/2 + 2/3'))
+
+
 def test_Number_new():
     """"
     Test for Number constructor

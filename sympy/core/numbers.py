@@ -1625,17 +1625,25 @@ class Rational(Number):
             q = 1
             gcd = 1
 
+        _deferred_mult = None
+
         if not isinstance(p, SYMPY_INTS):
-            p = Rational(p)
-            q *= p.q
-            p = p.p
+            rp = Rational(p)
+            if isinstance(q, str):
+                _deferred_mult = rp.q
+            else:
+                q = q * rp.q
+            p = rp.p
         else:
             p = int(p)
 
         if not isinstance(q, SYMPY_INTS):
-            q = Rational(q)
-            p *= q.q
-            q = q.p
+            rq = Rational(q)
+            p *= rq.q
+            q_val = rq.p
+            if _deferred_mult is not None:
+                q_val *= _deferred_mult
+            q = q_val
         else:
             q = int(q)
 
