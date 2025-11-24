@@ -3,7 +3,12 @@ from sympy.combinatorics.perm_groups import PermutationGroup
 from sympy.combinatorics.homomorphisms import homomorphism, group_isomorphism, is_isomorphic
 from sympy.combinatorics.free_groups import free_group
 from sympy.combinatorics.fp_groups import FpGroup
-from sympy.combinatorics.named_groups import AlternatingGroup, DihedralGroup, CyclicGroup
+from sympy.combinatorics.named_groups import (
+    AlternatingGroup,
+    DihedralGroup,
+    CyclicGroup,
+    SymmetricGroup,
+)
 from sympy.testing.pytest import raises
 
 def test_homomorphism():
@@ -56,6 +61,26 @@ def test_homomorphism():
     assert T.domain == F
     assert T.codomain == D
     assert T(a*b) == p
+
+
+def test_permutation_group_identity_homomorphism():
+    D3 = DihedralGroup(3)
+    phi = homomorphism(D3, D3, D3.generators, D3.generators)
+
+    for gen in D3.generators:
+        assert phi(gen) == gen
+        assert phi(gen**-1) == phi(gen)**-1
+
+    r, s = D3.generators
+    assert phi(r*s**-1*r**-1) == r*s**-1*r**-1
+    assert phi(r**3).is_identity
+    assert phi(s**2).is_identity
+
+    S3 = SymmetricGroup(3)
+    sigma = homomorphism(S3, S3, S3.generators, S3.generators)
+
+    for gen in S3.generators:
+        assert sigma(gen) == gen
 
 def test_isomorphisms():
 
