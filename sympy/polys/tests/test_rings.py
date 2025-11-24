@@ -270,6 +270,19 @@ def test_PolyElement_as_expr():
     R, = ring("", ZZ)
     assert R(3).as_expr() == 3
 
+
+def test_PolyElement_as_expr_custom_symbols():
+    R, x, y, z = ring("x,y,z", ZZ)
+    f = x**2 + 2*x*y + y**2 + 3
+
+    U, V, W = symbols("U V W")
+    expr = f.as_expr(U, V, W)
+
+    assert expr == U**2 + 2*U*V + V**2 + 3
+    assert expr.free_symbols == {U, V}
+
+    raises(ValueError, lambda: f.as_expr(U, V))
+
 def test_PolyElement_from_expr():
     x, y, z = symbols("x,y,z")
     R, X, Y, Z = ring((x, y, z), ZZ)
