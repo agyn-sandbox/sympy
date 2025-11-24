@@ -13,7 +13,7 @@ from sympy.integrals.integrals import integrate
 from sympy.physics.units import (amount_of_substance, area, convert_to, find_unit,
                                  volume, kilometer, joule, molar_gas_constant,
                                  vacuum_permittivity, elementary_charge, volt,
-                                 ohm)
+                                 ohm, newton, pascal, watt)
 from sympy.physics.units.definitions import (amu, au, centimeter, coulomb,
     day, foot, grams, hour, inch, kg, km, m, meter, millimeter,
     minute, quart, s, second, speed_of_light, bit,
@@ -22,7 +22,7 @@ from sympy.physics.units.definitions import (amu, au, centimeter, coulomb,
 
 from sympy.physics.units.definitions.dimension_definitions import (
     Dimension, charge, length, time, temperature, pressure,
-    energy, mass
+    energy, mass, power
 )
 from sympy.physics.units.prefixes import PREFIXES, kilo
 from sympy.physics.units.quantities import PhysicalConstant, Quantity
@@ -193,6 +193,49 @@ def test_check_unit_consistency():
     raises(ValueError, lambda: check_unit_consistency(u + 1))
     raises(ValueError, lambda: check_unit_consistency(u - 1))
     raises(ValueError, lambda: check_unit_consistency(1 - exp(u / w)))
+
+
+def test_collect_equivalent_dimensions_acceleration_times_time_vs_velocity():
+    expr = Add(meter/second, meter/second**2 * second, evaluate=False)
+    factor, dimension = SI._collect_factor_and_dimension(expr)
+
+    assert factor == 2
+    assert dimension == length/time
+
+
+def test_collect_equivalent_dimensions_force_area_vs_pressure():
+    expr = Add(pascal, newton/meter**2, evaluate=False)
+    factor, dimension = SI._collect_factor_and_dimension(expr)
+    expected_factor = SI._collect_factor_and_dimension(pascal)[0] + \
+        SI._collect_factor_and_dimension(newton/meter**2)[0]
+
+    assert factor == expected_factor
+    assert dimension == pressure
+
+
+def test_collect_equivalent_dimensions_energy_time_vs_power():
+    expr = Add(watt, joule/second, evaluate=False)
+    factor, dimension = SI._collect_factor_and_dimension(expr)
+    expected_factor = SI._collect_factor_and_dimension(watt)[0] + \
+        SI._collect_factor_and_dimension(joule/second)[0]
+
+    assert factor == expected_factor
+    assert dimension == power
+
+
+def test_collect_equivalent_dimensions_mixed_numeric_factors():
+    expr = Add(2*meter/second, 3*meter/second**2 * second, evaluate=False)
+    factor, dimension = SI._collect_factor_and_dimension(expr)
+
+    assert factor == 5
+    assert dimension == length/time
+
+
+def test_collect_equivalent_dimensions_non_equivalent_raises():
+    expr = Add(meter, second, evaluate=False)
+
+    with raises(ValueError):
+        SI._collect_factor_and_dimension(expr)
 
 
 def test_mul_div():
