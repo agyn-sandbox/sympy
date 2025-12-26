@@ -42,7 +42,7 @@ from .numbers import Rational, Float
 from .operations import LatticeOp
 from .rules import Transform
 from .singleton import S
-from .sympify import sympify
+from .sympify import sympify, SympifyError
 
 from sympy.core.containers import Tuple, Dict
 from sympy.core.logic import fuzzy_and
@@ -506,10 +506,25 @@ class Function(Application, Expr):
                 fname = MPMATH_TRANSLATIONS[fname]
             func = getattr(mpmath, fname)
         except (AttributeError, KeyError):
-            try:
-                return Float(self._imp_(*self.args), prec)
-            except (AttributeError, TypeError, ValueError):
+            imp = getattr(self, '_imp_', None)
+            if imp is None:
                 return
+            dps = mlib.libmpf.prec_to_dps(prec)
+            evalf_args = [a if a.is_number else a.evalf(dps)
+                          for a in self.args]
+            if not all(arg.is_number for arg in evalf_args):
+                return
+            try:
+                res = imp(*evalf_args)
+            except (TypeError, ValueError):
+                return
+            try:
+                return sympify(res).evalf(dps)
+            except (TypeError, ValueError, AttributeError, SympifyError):
+                try:
+                    return Float(res, dps)
+                except (TypeError, ValueError):
+                    return
 
         # Convert all args to mpf or mpc
         # Convert the arguments to *higher* precision than requested for the

@@ -328,6 +328,45 @@ def test_implemented_function_evalf():
     del f._imp_     # XXX: due to caching _imp_ would influence all other tests
 
 
+def test_implemented_function_evalf_composition():
+    from sympy.utilities.lambdify import implemented_function
+    f = Function('f_comp')
+    g = Function('g_comp')
+    f = implemented_function(f, lambda x: x**2)
+    g = implemented_function(g, lambda x: 2*x)
+    try:
+        assert f(g(2)).evalf() == 16
+    finally:
+        for func in (f, g):
+            if hasattr(func, '_imp_'):
+                del func._imp_
+
+
+def test_implemented_function_evalf_precision():
+    from sympy.utilities.lambdify import implemented_function
+    f = Function('f_prec')
+    g = Function('g_prec')
+    f = implemented_function(f, lambda x: x**2)
+    g = implemented_function(g, lambda x: 2*x)
+    try:
+        assert f(g(pi)).evalf(50) == (4*pi**2).evalf(50)
+    finally:
+        for func in (f, g):
+            if hasattr(func, '_imp_'):
+                del func._imp_
+
+
+def test_implemented_function_evalf_complex():
+    from sympy.utilities.lambdify import implemented_function
+    h = Function('h_complex')
+    h = implemented_function(h, lambda x: 1j*x)
+    try:
+        assert h(2).evalf() == 2*I
+    finally:
+        if hasattr(h, '_imp_'):
+            del h._imp_
+
+
 def test_evaluate_false():
     for no in [0, False]:
         assert Add(3, 2, evaluate=no).is_Add
