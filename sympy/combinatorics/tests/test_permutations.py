@@ -349,7 +349,12 @@ def test_args():
     raises(ValueError, lambda: Permutation([[1, 2], 0]))
            # enclosing brackets needed on 0
     raises(ValueError, lambda: Permutation([1, 1, 0]))
-    raises(ValueError, lambda: Permutation([[1], [1, 2]]))
+    assert Permutation([[1], [1, 2]]) == Permutation([0, 2, 1])
+    assert Permutation([[0, 1], [0, 1]]) == Permutation([0, 1])
+    assert Permutation([[0, 1], [1, 2]]) == Permutation([2, 0, 1])
+    assert Permutation([[0, 1, 2], [2, 1]]) == Permutation([2, 1, 0])
+    assert Permutation([[1], [1], [1, 2]]) == Permutation([0, 2, 1])
+    assert Permutation([[5, 6], [5, 6]]) == Permutation([0, 1, 2, 3, 4, 5, 6])
     raises(ValueError, lambda: Permutation([4, 5], size=10))  # where are 0-3?
     # but this is ok because cycles imply that only those listed moved
     assert Permutation(4, 5) == Permutation([0, 1, 2, 3, 5, 4])
