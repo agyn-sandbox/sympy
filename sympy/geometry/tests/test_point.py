@@ -10,6 +10,7 @@ from sympy.utilities.pytest import raises
 def test_point():
     x = Symbol('x', real=True)
     y = Symbol('y', real=True)
+    z = Symbol('z', real=True)
     x1 = Symbol('x1', real=True)
     x2 = Symbol('x2', real=True)
     y1 = Symbol('y1', real=True)
@@ -41,6 +42,11 @@ def test_point():
     assert Point.distance(p3, p4) == sqrt(2)
     assert Point.distance(p1, p1) == 0
     assert Point.distance(p3, p2) == sqrt(p2.x**2 + p2.y**2)
+    assert Point(2, 0).distance(Point(1, 0, 2)) == sqrt(5)
+    assert Point(0, 0).distance(Point(0, 0, 0)) == 0
+    assert Point(x, 0).distance(Point(0, 0, z)) == sqrt(x**2 + z**2)
+    assert Point(1, 1).distance(Point(4, 5)) == 5
+    assert Point(0, 0, 0).distance(Point(1, 1, 1)) == sqrt(3)
 
     assert Point.taxicab_distance(p4, p3) == 2
 
