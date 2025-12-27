@@ -291,6 +291,35 @@ def test_upretty_sub_super():
     assert upretty( Symbol("F^1^2^3^4") ) == 'F¹ ² ³ ⁴'
 
 
+def test_pretty_unicode_digit_suffix_symbols():
+    from io import StringIO
+    import sys
+
+    omega = "\N{GREEK SMALL LETTER OMEGA}"
+    sub_zero = "\N{SUBSCRIPT ZERO}"
+    sub_one = "\N{SUBSCRIPT ONE}"
+
+    cases = (
+        (Symbol(omega + "0"), omega + sub_zero),
+        (Symbol(omega + "1"), omega + sub_one),
+        (Symbol(omega + "10"), omega + sub_one + sub_zero),
+        (Symbol('w0'), 'w' + sub_zero),
+        (Symbol('w10'), 'w' + sub_one + sub_zero),
+    )
+
+    for sym_obj, expected in cases:
+        assert upretty(sym_obj) == expected
+
+        buffer = StringIO()
+        stdout = sys.stdout
+        sys.stdout = buffer
+        try:
+            pprint(sym_obj, use_unicode=True, wrap_line=False)
+        finally:
+            sys.stdout = stdout
+        assert buffer.getvalue() == expected + '\n'
+
+
 def test_upretty_subs_missing_in_24():
     assert upretty( Symbol('F_beta') ) == 'Fᵦ'
     assert upretty( Symbol('F_gamma') ) == 'Fᵧ'

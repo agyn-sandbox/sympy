@@ -7,7 +7,8 @@ import re
 from collections.abc import Iterable
 from sympy import Derivative
 
-_name_with_digits_p = re.compile(r'^([a-zA-Z]+)([0-9]+)$')
+# Leading group matches Unicode letter characters (category L).
+_name_with_digits_p = re.compile(r'^([^\W\d_]+)([0-9]+)$', re.UNICODE)
 
 
 def split_super_sub(text):

@@ -32,6 +32,19 @@ def test_super_sub():
     assert split_super_sub("") == ("", [], [])
 
 
+def test_super_sub_unicode_letters():
+    omega = "\N{GREEK SMALL LETTER OMEGA}"
+    cases = {
+        omega + "0": (omega, [], ["0"]),
+        omega + "1": (omega, [], ["1"]),
+        omega + "10": (omega, [], ["10"]),
+        "w0": ("w", [], ["0"]),
+        "w10": ("w", [], ["10"]),
+    }
+    for name, expected in cases.items():
+        assert split_super_sub(name) == expected
+
+
 def test_requires_partial():
     x, y, z, t, nu = symbols('x y z t nu')
     n = symbols('n', integer=True)
