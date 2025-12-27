@@ -1,7 +1,7 @@
 from sympy.sets import (ConditionSet, Intersection, FiniteSet,
-    EmptySet, Union, Contains)
+    EmptySet, Union, Contains, ImageSet)
 from sympy import (Symbol, Eq, S, Abs, sin, pi, Interval,
-    And, Mod, oo, Function)
+    And, Mod, oo, Function, Lambda)
 from sympy.testing.pytest import raises, XFAIL, warns_deprecated_sympy
 
 
@@ -128,6 +128,15 @@ def test_subs_CondSet():
         n, n < x, Interval(-oo, 0)).subs(x, p) == S.EmptySet
     assert ConditionSet(f(x), f(x) < 1, {w, z}
         ).subs(f(x), y) == ConditionSet(y, y < 1, {w, z})
+
+
+def test_subs_conditionset_preserves_bound_lambdas():
+    case_a = ConditionSet(x, Contains(x, ImageSet(Lambda(y, 2*y + y), S.Integers)), S.Reals)
+    assert case_a.subs(y, S(1)/3) == case_a
+
+    case_b = ConditionSet(y, Contains(y, ImageSet(Lambda(y, 2*y), S.Integers)), S.Reals)
+    assert case_b.subs(y, w) == ConditionSet(
+        w, Contains(w, ImageSet(Lambda(y, 2*y), S.Integers)), S.Reals)
 
 
 def test_subs_CondSet_tebr():

@@ -283,6 +283,19 @@ def test_IdentityFunction():
     assert Lambda((x, y), x) is not S.IdentityFunction
 
 
+def test_lambda_bound_subs_alpha_conversion():
+    safe = Lambda(y, y + 1).subs(y, w)
+    assert safe == Lambda(w, w + 1)
+
+    capture = Lambda(y, y + z).subs(y, z)
+    dummy = capture.variables[0]
+    assert dummy.is_Dummy and dummy != z
+    assert capture == Lambda(dummy, dummy + z)
+
+    blocked = Lambda(y, y).subs(y, 1)
+    assert blocked == Lambda(y, y)
+
+
 def test_Lambda_symbols():
     assert Lambda(x, 2*x).free_symbols == set()
     assert Lambda(x, x*y).free_symbols == {y}
