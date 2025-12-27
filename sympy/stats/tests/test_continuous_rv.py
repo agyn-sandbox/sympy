@@ -730,3 +730,36 @@ def test_issue_13324():
     X = Uniform('X', 0, 1)
     assert E(X, X > Rational(1,2)) == Rational(3,4)
     assert E(X, X > 0) == Rational(1,2)
+
+def test_precomputed_cdfs_eval_examples():
+    # Arcsin
+    assert not isinstance(cdf(Arcsin("x", 0, 3))(1), Integral)
+    # Dagum at x=3, p=1/3, a=1/5, b=2
+    p = S(1)/3; a = S(1)/5; b = S(2)
+    t = (S(3)/b)**a
+    assert cdf(Dagum("x", p, a, b))(3) == (t/(1+t))**p
+    # Erlang k=1, l=1 at x=1
+    assert cdf(Erlang("x", 1, 1))(1) == lowergamma(1, 1)/gamma(1)
+    # Frechet a=4/3, s=1, m=2 at x=3 -> exp(-1)
+    assert cdf(Frechet("x", S(4)/3, 1, 2))(3) == exp(-1)
+    # Gamma k=1/10, theta=2 at x=3
+    assert cdf(Gamma("x", S(1)/10, 2))(3) == lowergamma(S(1)/10, S(3)/2)/gamma(S(1)/10)
+    # Inverse Gamma a=5/7, b=2 at x=3
+    assert cdf(GammaInverse("x", S(5)/7, 2))(3) == uppergamma(S(5)/7, S(2)/3)/gamma(S(5)/7)
+    # Kumaraswamy a=1/123, b=5 at x=1/3
+    assert cdf(Kumaraswamy("x", S(1)/123, 5))(S(1)/3) == 1 - (1 - (S(1)/3)**(S(1)/123))**5
+    # Laplace mu=2,b=3 at x=5
+    assert cdf(Laplace("x", 2, 3))(5) == 1 - exp(-(S(5) - 2)/3)/2
+    # Logistic mu=1,s=1/10 at x=2
+    assert cdf(Logistic("x", 1, S(1)/10))(2) == 1/(1 + exp(-(S(2) - 1)/(S(1)/10)))
+    # Nakagami mu=7/3, omega=1 at x=2
+    assert cdf(Nakagami("x", S(7)/3, 1))(2) == lowergamma(S(7)/3, (S(7)/3)*S(4))/gamma(S(7)/3)
+    # StudentT nu=10 at x=2 (hypergeometric form)
+    assert cdf(StudentT("x", 10))(2) == S.Half + S(2)/(sqrt(S(10))*beta(S.Half, S(10)/2)) * \
+        hyper([S.Half, S(11)/2], [S(3)/2], -S(4)/S(10))
+    # UniformSum n=5 at x=2
+    us = cdf(UniformSum("x", 5))(2)
+    assert not isinstance(us, Integral)
+    k = Symbol('k')
+    assert us == Sum((-1)**k*binomial(5, k)*(S(2) - k)**5, (k, 0, floor(S(2))))/factorial(5)
+
