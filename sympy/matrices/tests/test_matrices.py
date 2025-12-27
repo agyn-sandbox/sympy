@@ -470,6 +470,33 @@ def test_det_LU_decomposition():
     assert M.det(method="lu") == z**2 - x*y
 
 
+def _expr_contains_nan(expr):
+    return expr is S.NaN or getattr(expr, "has", lambda *_: False)(S.NaN)
+
+
+def test_det_symbolic_vs_lu_no_nan():
+    for n in range(1, 7):
+        M = Matrix([[i + a*j for i in range(n)] for j in range(n)])
+        det_default = M.det()
+        det_lu = M.det(method="lu")
+        assert det_default == det_lu
+        assert not _expr_contains_nan(det_default)
+        if n in (5, 6):
+            det_bareiss = M.det(method="bareiss")
+            assert det_bareiss == det_lu
+            assert not _expr_contains_nan(det_bareiss)
+
+
+def test_det_bareiss_pathological_zero():
+    M = Matrix([[x, x], [x, x]])
+    det_default = M.det()
+    det_lu = M.det(method="lu")
+    det_bareiss = M.det(method="bareiss")
+    assert det_default == det_lu == det_bareiss == S.Zero
+    assert not _expr_contains_nan(det_default)
+    assert not _expr_contains_nan(det_bareiss)
+
+
 def test_slicing():
     m0 = eye(4)
     assert m0[:3, :3] == eye(3)
