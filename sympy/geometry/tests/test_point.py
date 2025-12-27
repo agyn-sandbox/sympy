@@ -119,6 +119,47 @@ def test_point():
     raises(ValueError, lambda: p.transform(Matrix([[1, 0], [0, 1]])))
 
 
+def test_point_scalar_multiplication_commutative_and_asymmetry_fix():
+    # Setup
+    p1 = Point(0, 0)
+    p2 = Point(1, 1)
+
+    # Integer
+    assert 2*p2 == Point(2, 2)
+    assert p2*2 == Point(2, 2)
+
+    # Rational
+    r = S(3)/2
+    assert r*p2 == Point(3/2, 3/2)
+    assert p2*r == Point(3/2, 3/2)
+
+    # Float (preserve Float exactness)
+    f = S(2).n()  # sympify(2.0)
+    res = f*p2
+    assert res == Point(2.0, 2.0)
+    assert p2*f == Point(2.0, 2.0)
+
+    # Symbolic commutative scalar
+    a = Symbol('a')
+    assert a*p2 == Point(a, a)
+    assert p2*a == Point(a, a)
+
+    # Addition with scalar*Point works in both orders
+    assert p1 + (p2*2) == Point(2, 2)
+    assert p1 + (2*p2) == Point(2, 2)
+
+    # Non-commutative Symbol should be rejected
+    nc = Symbol('nc', commutative=False)
+    from sympy.utilities.pytest import raises
+    raises(TypeError, lambda: nc*p2)
+    raises(TypeError, lambda: p2*nc)
+
+    # Non-scalar types like Matrix should be rejected
+    from sympy.matrices import Matrix
+    raises(TypeError, lambda: Matrix([[1, 0], [0, 1]])*p2)
+    raises(TypeError, lambda: p2*Matrix([[1, 0], [0, 1]]))
+
+
 def test_point3D():
     x = Symbol('x', real=True)
     y = Symbol('y', real=True)
