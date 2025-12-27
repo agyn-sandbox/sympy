@@ -50,7 +50,7 @@ from sympy import (log, sqrt, pi, S, Dummy, Interval, sympify, gamma,
                    Lambda, Basic, lowergamma, erf, erfc, I, asin, uppergamma)
 from sympy import beta as beta_fn
 from sympy import cos, exp, besseli
-from sympy.functions.special.beta_functions import betainc
+from sympy.functions.special.hyper import hyper
 from sympy.stats.crv import (SingleContinuousPSpace, SingleContinuousDistribution,
         ContinuousDistributionHandmade)
 from sympy.stats.rv import _value_check
@@ -2293,12 +2293,7 @@ class StudentTDistribution(SingleContinuousDistribution):
 
     def _cdf(self, x):
         nu = self.nu
-        t = nu/(nu + x**2)
-        reg = betainc(nu/2, S.Half, S.Zero, t)/beta_fn(S.Half, nu/2)
-        return Piecewise(
-            (S.Half*reg, x < 0),
-            (S.One - S.Half*reg, True)
-        )
+        return S.Half + x/(sqrt(nu)*beta_fn(S.Half, nu/2)) * hyper([S.Half, (nu + 1)/2], [S(3)/2], -x**2/nu)
 
 
 def StudentT(name, nu):
