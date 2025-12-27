@@ -357,6 +357,24 @@ class PythonCodePrinter(AbstractPythonCodePrinter):
         PREC = precedence(expr)
         return self._operators['not'] + self.parenthesize(expr.args[0], PREC)
 
+    def _print_Indexed(self, expr):
+        """Print Python indexing for SymPy Indexed.
+
+        Supports multiple indices as a single bracketed, comma-separated tuple
+        (e.g., A[i, j]) and symbolic indices via self._print.
+        """
+        base = expr.base
+        if hasattr(base, 'label'):
+            base_str = self._print(base.label)
+        else:
+            base_str = self._print(base)
+        indices_str = ', '.join(self._print(index) for index in expr.indices)
+        return '{}[{}]'.format(base_str, indices_str)
+
+    def _print_Idx(self, expr):
+        """Print index labels for Idx."""
+        return self._print(expr.label)
+
 
 for k in PythonCodePrinter._kf:
     setattr(PythonCodePrinter, '_print_%s' % k, _print_known_func)
