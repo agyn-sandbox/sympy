@@ -6,7 +6,7 @@ import builtins
 import types
 
 from sympy.assumptions import Q
-from sympy.core import Symbol, Function, Float, Rational, Integer, I, Mul, Pow, Eq
+from sympy.core import Symbol, Function, Float, Rational, Integer, I, Mul, Pow, Eq, Lt, Ge
 from sympy.functions import exp, factorial, factorial2, sin, Min, Max
 from sympy.logic import And
 from sympy.series import Limit
@@ -216,6 +216,26 @@ def test_issue_10773():
     }
     for text, result in inputs.items():
         assert parse_expr(text, evaluate=False) == parse_expr(result, evaluate=False)
+
+
+def test_parse_expr_inequalities_evaluate_false():
+    x = Symbol('x')
+
+    assert parse_expr('1 < 2') == True
+    assert parse_expr('1 < 2', evaluate=False) == Lt(1, 2, evaluate=False)
+    assert parse_expr('1 >= 2', evaluate=False) == Ge(1, 2, evaluate=False)
+
+    chained = parse_expr('1 < x < 3', evaluate=False)
+    expected = And(
+        Lt(1, x, evaluate=False),
+        Lt(x, 3, evaluate=False),
+        evaluate=False
+    )
+    assert chained == expected
+
+    assert parse_expr('Eq(1, 2)', evaluate=False) == Eq(1, 2, evaluate=False)
+
+    raises(TypeError, lambda: parse_expr('1 < x < 3'))
 
 
 def test_split_symbols():

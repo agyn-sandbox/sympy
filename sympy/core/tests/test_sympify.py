@@ -10,7 +10,7 @@ from sympy.functions.elementary.complexes import Abs
 from sympy.functions.elementary.exponential import exp
 from sympy.functions.elementary.miscellaneous import sqrt
 from sympy.functions.elementary.trigonometric import (cos, sin)
-from sympy.logic.boolalg import (false, Or, true, Xor)
+from sympy.logic.boolalg import (false, Or, true, Xor, And)
 from sympy.matrices.dense import Matrix
 from sympy.parsing.sympy_parser import null
 from sympy.polys.polytools import Poly
@@ -30,6 +30,7 @@ from sympy.abc import _clash, _clash1, _clash2
 from sympy.external.gmpy import HAS_GMPY
 from sympy.sets import FiniteSet, EmptySet
 from sympy.tensor.array.dense_ndim_array import ImmutableDenseNDimArray
+from sympy.core.relational import Eq, Lt, Ge
 
 import mpmath
 from collections import defaultdict, OrderedDict
@@ -441,6 +442,27 @@ def test_evaluate_false():
     }
     for case, result in cases.items():
         assert sympify(case, evaluate=False) == result
+
+
+def test_sympify_relational_evaluate_false():
+    rel = sympify('1 < 2', evaluate=False)
+    assert rel == Lt(1, 2, evaluate=False)
+
+    assert sympify('1 < 2') is true
+
+    assert sympify('1 >= 2', evaluate=False) == Ge(1, 2, evaluate=False)
+
+    chained = sympify('1 < x < 3', evaluate=False)
+    expected = And(
+        Lt(1, x, evaluate=False),
+        Lt(x, 3, evaluate=False),
+        evaluate=False
+    )
+    assert chained == expected
+
+    assert sympify('Eq(1, 2)', evaluate=False) == Eq(1, 2, evaluate=False)
+
+    raises(TypeError, lambda: sympify('1 < x < 3'))
 
 
 def test_issue_4133():
