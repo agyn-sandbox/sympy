@@ -2129,6 +2129,9 @@ class PyTestReporter(Reporter):
         if width is None:
             width = self.terminal_width
 
+        if color and not (self._colors or self._force_colors or force_colors):
+            color = ""
+
         if align == "right":
             if self._write_pos + len(text) > width:
                 # we don't fit on the current line, create a new line
