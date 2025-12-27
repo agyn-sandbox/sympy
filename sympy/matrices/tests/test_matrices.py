@@ -2235,6 +2235,33 @@ def test_col_insert():
         assert flatten(zeros(3).col_insert(i, c4).row(0).tolist()) == l
 
 
+def test_col_insert_dense_regressions():
+    m = eye(6)
+    v = 2*ones(6, 2)
+    r = m.col_insert(3, v)
+    assert r.shape == (6, 8)
+    assert r[:, :3] == m[:, :3]
+    assert r[:, 3:5] == v
+    assert r[:, 5:] == m[:, 3:]
+
+    leading = 7*ones(6, 1)
+    inserted = m.col_insert(0, leading)
+    assert inserted[:, 0] == leading
+    assert inserted[:, 1:] == m
+
+    trailing = -3*ones(6, 1)
+    appended = m.col_insert(m.cols, trailing)
+    assert appended[:, :-1] == m
+    assert appended[:, -1] == trailing
+
+    base = Matrix([[1, 2, 3], [4, 5, 6]])
+    newcol = Matrix([[9], [10]])
+    mid = base.col_insert(1, newcol)
+    assert mid == Matrix([[1, 9, 2, 3], [4, 10, 5, 6]])
+
+    neg = base.col_insert(-1, newcol)
+    assert neg == Matrix([[1, 2, 9, 3], [4, 5, 10, 6]])
+
 def test_normalized():
     assert Matrix([3, 4]).normalized() == \
         Matrix([Rational(3, 5), Rational(4, 5)])
