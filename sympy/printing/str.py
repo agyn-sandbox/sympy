@@ -364,7 +364,12 @@ class StrPrinter(Printer):
         if not b:
             return sign + '*'.join(a_str)
         elif len(b) == 1:
-            return sign + '*'.join(a_str) + "/" + b_str[0]
+            # If the single denominator renders with a division (e.g. '1/b'),
+            # wrap it in parentheses to preserve the intended grouping.
+            denom = b_str[0]
+            if '/' in denom:
+                return sign + '*'.join(a_str) + "/(" + denom + ")"
+            return sign + '*'.join(a_str) + "/" + denom
         else:
             return sign + '*'.join(a_str) + "/(%s)" % '*'.join(b_str)
 
