@@ -2079,6 +2079,8 @@ class Lambda(Expr):
                 return self
 
             replacement = new
+            if replacement == old:
+                return self
             other_bound = set(bound) - {old}
             if replacement in other_bound or replacement in self.expr.free_symbols:
                 replacement = old.as_dummy()

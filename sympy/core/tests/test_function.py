@@ -287,6 +287,9 @@ def test_lambda_bound_subs_alpha_conversion():
     safe = Lambda(y, y + 1).subs(y, w)
     assert safe == Lambda(w, w + 1)
 
+    same = Lambda(y, y + 1).subs(y, y)
+    assert same == Lambda(y, y + 1)
+
     capture = Lambda(y, y + z).subs(y, z)
     dummy = capture.variables[0]
     assert dummy.is_Dummy and dummy != z
