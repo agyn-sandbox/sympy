@@ -215,11 +215,10 @@ class Point(GeometryEntity):
         sympy.geometry.point.Point.translate
 
         """
-        try:
-            s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
-        except TypeError:
-            raise GeometryError("Don't know how to add {} and a Point object".format(other))
+        other_point = self._coerce_point_operand(
+            other, "Don't know how to add {} and a Point object", allow_morph=True)
 
+        s, o = Point._normalize_dimension(self, other_point)
         coords = [simplify(a + b) for a, b in zip(s, o)]
         return Point(coords, evaluate=False)
 
@@ -302,7 +301,35 @@ class Point(GeometryEntity):
     def __sub__(self, other):
         """Subtract two points, or subtract a factor from this point's
         coordinates."""
-        return self + [-x for x in other]
+        other_point = self._coerce_point_operand(
+            other, "Don't know how to subtract a Point object from {}", allow_morph=True)
+
+        s, o = Point._normalize_dimension(self, other_point)
+        coords = [simplify(a - b) for a, b in zip(s, o)]
+        return Point(coords, evaluate=False)
+
+    def __radd__(self, other):
+        other_point = self._coerce_point_operand(
+            other, "Don't know how to add {} and a Point object", allow_morph=True)
+        return other_point + self
+
+    def __rsub__(self, other):
+        other_point = self._coerce_point_operand(
+            other, "Don't know how to subtract a Point object from {}", allow_morph=True)
+        return other_point - self
+
+    def _coerce_point_operand(self, other, message_template, allow_morph=False):
+        if getattr(other, 'is_Matrix', False):
+            raise GeometryError(message_template.format(other))
+        try:
+            other_point = Point(other, evaluate=False)
+        except (TypeError, ValueError):
+            raise GeometryError(message_template.format(other))
+
+        if not allow_morph and other_point.ambient_dimension != self.ambient_dimension:
+            raise GeometryError(message_template.format(other))
+
+        return other_point
 
     @classmethod
     def _normalize_dimension(cls, *points, **kwargs):

@@ -2,6 +2,7 @@ from sympy import I, Rational, Symbol, pi, sqrt, S, sympify, MatrixSymbol
 from sympy.geometry import Line, Point, Point2D, Point3D, Line3D, Plane
 from sympy.geometry.entity import rotate, scale, translate
 from sympy.matrices import Matrix
+from sympy.geometry.exceptions import GeometryError
 from sympy.utilities.iterables import subsets, permutations, cartes
 from sympy.utilities.pytest import raises, warns
 
@@ -155,6 +156,33 @@ def test_point_scalar_multiplication_commutative():
     A = MatrixSymbol('A', 2, 2)
     raises(TypeError, lambda: A*p)
     raises(TypeError, lambda: p*A)
+
+
+def test_point_reverse_add_sub():
+    p = Point(1, 2)
+    a = Symbol('a')
+    tuple_coords = (sympify(0.1), sympify(0.2))
+    list_coords = [1, 2]
+    line = Line(Point(0, 0), Point(1, 1))
+    matrix = Matrix([[1, 0], [0, 1]])
+
+    raises(GeometryError, lambda: a + p)
+    raises(GeometryError, lambda: p + a)
+    raises(GeometryError, lambda: a - p)
+    raises(GeometryError, lambda: p - a)
+
+    assert tuple_coords + p == Point2D(sympify(1.1), sympify(2.2), evaluate=False)
+    assert list_coords - Point(3, 4) == Point2D(-2, -2)
+
+    raises(TypeError, lambda: line + p)
+    raises(GeometryError, lambda: p + line)
+    raises(ValueError, lambda: line - p)
+    raises(GeometryError, lambda: p - line)
+
+    raises(GeometryError, lambda: matrix + p)
+    raises(GeometryError, lambda: p + matrix)
+    raises(GeometryError, lambda: matrix - p)
+    raises(GeometryError, lambda: p - matrix)
 
 def test_point3D():
     x = Symbol('x', real=True)
