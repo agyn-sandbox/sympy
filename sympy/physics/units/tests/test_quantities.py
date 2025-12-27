@@ -10,6 +10,7 @@ from sympy.functions.elementary.exponential import (exp, log)
 from sympy.functions.elementary.miscellaneous import sqrt
 from sympy.functions.elementary.trigonometric import sin
 from sympy.integrals.integrals import integrate
+from sympy.physics import units
 from sympy.physics.units import (amount_of_substance, area, convert_to, find_unit,
                                  volume, kilometer, joule, molar_gas_constant,
                                  vacuum_permittivity, elementary_charge, volt,
@@ -193,6 +194,99 @@ def test_check_unit_consistency():
     raises(ValueError, lambda: check_unit_consistency(u + 1))
     raises(ValueError, lambda: check_unit_consistency(u - 1))
     raises(ValueError, lambda: check_unit_consistency(1 - exp(u / w)))
+
+
+def test_collect_factor_and_dimension_equivalent_velocity_cases():
+    v = units.Quantity('v_equiv_add')
+    SI.set_quantity_dimension(v, units.velocity)
+    SI.set_quantity_scale_factor(v, 2 * meter / second)
+
+    a = units.Quantity('a_equiv_add')
+    SI.set_quantity_dimension(a, units.acceleration)
+    SI.set_quantity_scale_factor(a, -9.8 * meter / second**2)
+
+    t = units.Quantity('t_equiv_add')
+    SI.set_quantity_dimension(t, units.time)
+    SI.set_quantity_scale_factor(t, 5 * second)
+
+    dimsys = SI.get_dimension_system()
+
+    expr = a*t + v
+    factor, dimension = SI._collect_factor_and_dimension(expr)
+    expected = a.scale_factor * t.scale_factor + v.scale_factor
+    assert factor == expected
+    assert dimsys.equivalent_dims(dimension, units.velocity)
+
+    zero_expr = 0*a*t + v
+    zero_factor, zero_dim = SI._collect_factor_and_dimension(zero_expr)
+    assert zero_factor == v.scale_factor
+    assert dimsys.equivalent_dims(zero_dim, units.velocity)
+
+    nested_expr = v + (a*t + v)
+    nested_factor, nested_dim = SI._collect_factor_and_dimension(nested_expr)
+    assert nested_factor == v.scale_factor + factor
+    assert dimsys.equivalent_dims(nested_dim, units.velocity)
+
+
+def test_collect_factor_and_dimension_equivalent_other_dimensions():
+    dimsys = SI.get_dimension_system()
+
+    momentum_q = units.Quantity('p_equiv_add')
+    SI.set_quantity_dimension(momentum_q, units.momentum)
+    SI.set_quantity_scale_factor(momentum_q, 3 * kilogram * meter / second)
+
+    force_q = units.Quantity('f_equiv_add')
+    SI.set_quantity_dimension(force_q, units.force)
+    SI.set_quantity_scale_factor(force_q, 7 * kilogram * meter / second**2)
+
+    time_q = units.Quantity('t_equiv_force_add')
+    SI.set_quantity_dimension(time_q, units.time)
+    SI.set_quantity_scale_factor(time_q, 2 * second)
+
+    factor, dimension = SI._collect_factor_and_dimension(momentum_q + force_q*time_q)
+    expected = momentum_q.scale_factor + force_q.scale_factor * time_q.scale_factor
+    assert factor == expected
+    assert dimsys.equivalent_dims(dimension, units.momentum)
+
+    power_q = units.Quantity('power_equiv_add')
+    SI.set_quantity_dimension(power_q, units.power)
+    SI.set_quantity_scale_factor(power_q, 11 * joule / second)
+
+    energy_q = units.Quantity('energy_equiv_add')
+    SI.set_quantity_dimension(energy_q, units.energy)
+    SI.set_quantity_scale_factor(energy_q, 13 * joule)
+
+    time_power_q = units.Quantity('t_equiv_power_add')
+    SI.set_quantity_dimension(time_power_q, units.time)
+    SI.set_quantity_scale_factor(time_power_q, 5 * second)
+
+    power_factor, power_dim = SI._collect_factor_and_dimension(power_q + energy_q / time_power_q)
+    expected_power = power_q.scale_factor + energy_q.scale_factor / time_power_q.scale_factor
+    assert power_factor == expected_power
+    assert dimsys.equivalent_dims(power_dim, units.power)
+
+
+def test_collect_factor_and_dimension_symbolic_coefficients():
+    x, y = symbols('x y')
+    qv = units.Quantity('v_equiv_symbolic')
+    SI.set_quantity_dimension(qv, units.velocity)
+    SI.set_quantity_scale_factor(qv, meter / second)
+
+    factor, dimension = SI._collect_factor_and_dimension(x*qv + y*qv)
+    assert factor == x + y
+    assert SI.get_dimension_system().equivalent_dims(dimension, units.velocity)
+
+
+def test_collect_factor_and_dimension_mismatched_dimensions_raise():
+    vel = units.Quantity('v_equiv_mismatch')
+    SI.set_quantity_dimension(vel, units.velocity)
+    SI.set_quantity_scale_factor(vel, meter / second)
+
+    time_q = units.Quantity('t_equiv_mismatch')
+    SI.set_quantity_dimension(time_q, units.time)
+    SI.set_quantity_scale_factor(time_q, second)
+
+    raises(ValueError, lambda: SI._collect_factor_and_dimension(vel + time_q))
 
 
 def test_mul_div():
