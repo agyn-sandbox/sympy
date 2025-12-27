@@ -50,6 +50,45 @@ def test_monomials():
     assert set(itermonomials([x, y], 3)) == \
             {S.One, x, y, x**2, x**3, y**2, y**3, x*y, x*y**2, y*x**2}
 
+    assert set(itermonomials([x, y, z], 3, 3)) == {
+        x**3,
+        y**3,
+        z**3,
+        x**2*y,
+        x**2*z,
+        y**2*x,
+        y**2*z,
+        z**2*x,
+        z**2*y,
+        x*y*z,
+    }
+
+    assert set(itermonomials([x, y], 3, 2)) == {
+        x**2,
+        y**2,
+        x*y,
+        x**3,
+        y**3,
+        x**2*y,
+        x*y**2,
+    }
+
+    nc_a, nc_b = symbols('a b', commutative=False)
+    assert set(itermonomials([nc_a, nc_b], 3, 2)) == {
+        nc_a**2,
+        nc_b**2,
+        nc_a*nc_b,
+        nc_b*nc_a,
+        nc_a**3,
+        nc_b**3,
+        nc_a**2*nc_b,
+        nc_a*nc_b*nc_a,
+        nc_b*nc_a**2,
+        nc_a*nc_b**2,
+        nc_b*nc_a*nc_b,
+        nc_b**2*nc_a,
+    }
+
     i, j, k = symbols('i j k', commutative=False)
     assert set(itermonomials([i, j, k], 0)) == {S.One}
     assert set(itermonomials([i, j, k], 1)) == {S.One, i, j, k}
