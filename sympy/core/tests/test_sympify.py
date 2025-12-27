@@ -510,6 +510,8 @@ def test_kernS():
     assert kernS('(1-2**-(4+1)*(1-y)*x)') == (1 - x*(1 - y)/32)
     assert kernS('(1-2**(4+1)*(1-y)*x)') == (1 - 32*x*(1 - y))
     assert kernS('(1-2.*(1-y)*x)') == 1 - 2.*x*(1 - y)
+    assert kernS('(2*x)/(x-1)') == sympify('(2*x)/(x-1)')
+    assert kernS('(x**2 + x)/(x-1)') == sympify('(x**2 + x)/(x-1)')
     one = kernS('x - (x - 1)')
     assert one != 1 and one.expand() == 1
 
