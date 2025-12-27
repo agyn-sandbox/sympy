@@ -5,8 +5,10 @@ This module contains python code printers for plain python as well as NumPy & Sc
 """
 from collections import defaultdict
 from itertools import chain
-from sympy.core import S
-from .precedence import precedence
+from sympy.core import S, Mul, Pow
+from sympy.core.mod import Mod
+from sympy.core.mul import _keep_coeff
+from .precedence import precedence, PRECEDENCE
 from .codeprinter import CodePrinter
 
 _kw_py2and3 = {
@@ -61,6 +63,13 @@ _known_constants_math = {
     # 'Infinity': 'inf',
     # 'NaN': 'nan'
 }
+
+
+class PREC:
+    """Precedence shorthands for Python code emission."""
+
+    MUL = PRECEDENCE["Mul"]
+    UNARY = PRECEDENCE["Unary"]
 
 def _print_known_func(self, expr):
     known = self.known_functions[expr.__class__.__name__]
@@ -427,6 +436,63 @@ class AbstractPythonCodePrinter(CodePrinter):
 
 
 class PythonCodePrinter(AbstractPythonCodePrinter):
+
+    def _print_Mul(self, expr):
+        prec = precedence(expr)
+        coeff, tail = expr.as_coeff_Mul()
+        sign = ""
+        unsigned = expr
+
+        if coeff < 0:
+            sign = "-"
+            unsigned = _keep_coeff(-coeff, tail)
+            if not unsigned.is_Mul:
+                return sign + self.parenthesize(unsigned, PREC.UNARY)
+
+        args = Mul.make_args(unsigned)
+
+        a = []
+        b = []
+        pow_paren = []
+
+        for item in args:
+            if (item.is_commutative and item.is_Pow and item.exp.is_Rational
+                    and item.exp.is_negative):
+                if item.exp != -1:
+                    b.append(Pow(item.base, -item.exp, evaluate=False))
+                else:
+                    if len(item.args[0].args) != 1 and isinstance(item.base, Mul):
+                        pow_paren.append(item)
+                    b.append(Pow(item.base, -item.exp))
+            else:
+                a.append(item)
+
+        if not a:
+            a = [S.One]
+
+        def _parenthesize_factor(factor, level):
+            paren_level = PREC.MUL if factor.func == Mod else level
+            text = self.parenthesize(factor, paren_level)
+            if factor.func == Mod and not (text.startswith('(') and text.endswith(')')):
+                text = f"({text})"
+            return text
+
+        a_str = [_parenthesize_factor(x, prec) for x in a]
+        b_str = [_parenthesize_factor(x, prec) for x in b]
+
+        for item in pow_paren:
+            if item.base in b:
+                idx = b.index(item.base)
+                b_str[idx] = f"({b_str[idx]})"
+
+        num = '*'.join(a_str)
+        if not b:
+            return sign + num
+        elif len(b) == 1:
+            return sign + num + '/' + b_str[0]
+        else:
+            denom = '*'.join(b_str)
+            return sign + num + '/(' + denom + ')'
 
     def _print_sign(self, e):
         return '(0.0 if {e} == 0 else {f}(1, {e}))'.format(

@@ -8,7 +8,7 @@ from sympy import (
     symbols, lambdify, sqrt, sin, cos, tan, pi, acos, acosh, Rational,
     Float, Lambda, Piecewise, exp, E, Integral, oo, I, Abs, Function,
     true, false, And, Or, Not, ITE, Min, Max, floor, diff, IndexedBase, Sum,
-    DotProduct, Eq, Dummy, sinc, erf, erfc, factorial, gamma, loggamma,
+    DotProduct, Eq, Dummy, Mod, sinc, erf, erfc, factorial, gamma, loggamma,
     digamma, RisingFactorial, besselj, bessely, besseli, besselk, S, beta,
     betainc, betainc_regularized, fresnelc, fresnels)
 from sympy.codegen.cfunctions import expm1, log1p, exp2, log2, log10, hypot
@@ -118,6 +118,22 @@ def test_atoms():
     assert f(0) == 3.14
     f = lambdify(x, I + x, {"I": 1j})
     assert f(1) == 1 + 1j
+
+
+def test_lambdify_modules_empty_unary_minus_mod():
+    f = lambdify((x, y), -Mod(x, y), modules=[])
+    assert f(3, 7) == -3
+
+
+def test_lambdify_modules_empty_mul_with_mod():
+    expr_sym, a_sym, b_sym = symbols('expr a b')
+    f = lambdify((expr_sym, a_sym, b_sym), expr_sym*Mod(a_sym, b_sym), modules=[])
+    assert f(2, 3, 5) == 2*(3 % 5)
+
+
+def test_lambdify_modules_default_unary_minus_mod():
+    f = lambdify((x, y), -Mod(x, y))
+    assert f(3, 7) == -3
 
 #================== Test different modules =========================
 

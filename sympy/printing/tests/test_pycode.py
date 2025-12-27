@@ -3,7 +3,7 @@ from sympy.codegen.ast import none
 from sympy.codegen.cfunctions import expm1, log1p
 from sympy.codegen.scipy_nodes import cosm1
 from sympy.codegen.matrix_nodes import MatrixSolve
-from sympy.core import Expr, Mod, symbols, Eq, Le, Gt, zoo, oo, Rational, Pow
+from sympy.core import Expr, Mod, Mul, symbols, Eq, Le, Gt, zoo, oo, Rational, Pow
 from sympy.core.numbers import pi
 from sympy.core.singleton import S
 from sympy.functions import acos, KroneckerDelta, Piecewise, sign, sqrt
@@ -176,6 +176,21 @@ def test_issue_20762():
     assert pycode(expr) == 'a_b*b'
     expr = parse_latex(r'a_{11} \cdot b')
     assert pycode(expr) == 'a_11*b'
+
+
+def test_pycode_unary_minus_mod():
+    a, b = symbols('a b')
+    assert pycode(-Mod(a, b)) == "-(a % b)"
+
+
+def test_pycode_mul_mod_parentheses():
+    expr, a, b = symbols('expr a b')
+    # Mod on the right stays in-place but gains parentheses.
+    assert pycode(expr*Mod(a, b)) == "expr*(a % b)"
+
+    # Preserve grouping when Mod is the leading factor.
+    left = Mul(Mod(a, b), expr, evaluate=False)
+    assert pycode(left) == "(a % b)*expr"
 
 
 def test_sqrt():
