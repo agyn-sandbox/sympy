@@ -251,8 +251,27 @@ def posify(eq):
             eq[i] = e.subs(reps)
         return f(eq), {r: s for s, r in reps.items()}
 
-    reps = {s: Dummy(s.name, positive=True)
-                 for s in eq.free_symbols if s.is_positive is None}
+    reps = {}
+    for s in eq.free_symbols:
+        if s.is_positive is not None:
+            continue
+
+        assumptions = dict(s.assumptions0)
+        assumptions.pop('positive', None)
+
+        contradictory_true = ('negative', 'nonpositive', 'zero', 'imaginary')
+        for key in contradictory_true:
+            if assumptions.get(key) is True:
+                assumptions.pop(key, None)
+
+        contradictory_false = ('real', 'nonzero', 'nonnegative')
+        for key in contradictory_false:
+            if assumptions.get(key) is False:
+                assumptions.pop(key, None)
+
+        assumptions['positive'] = True
+        reps[s] = Dummy(s.name, **assumptions)
+
     eq = eq.subs(reps)
     return eq, {r: s for s, r in reps.items()}
 
