@@ -104,6 +104,8 @@ class Point(GeometryEntity):
     """
 
     is_Point = True
+    # Higher than MatrixExpr._op_priority (11.0) so scalar*Point dispatches here
+    _op_priority = 13.0
 
     def __new__(cls, *args, **kwargs):
         evaluate = kwargs.get('evaluate', global_evaluate[0])
@@ -213,11 +215,10 @@ class Point(GeometryEntity):
         sympy.geometry.point.Point.translate
 
         """
-        try:
-            s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
-        except TypeError:
-            raise GeometryError("Don't know how to add {} and a Point object".format(other))
+        other_point = self._coerce_point_operand(
+            other, "Don't know how to add {} and a Point object", allow_morph=True)
 
+        s, o = Point._normalize_dimension(self, other_point)
         coords = [simplify(a + b) for a, b in zip(s, o)]
         return Point(coords, evaluate=False)
 
@@ -274,7 +275,21 @@ class Point(GeometryEntity):
 
         sympy.geometry.point.Point.scale
         """
+        factor = self._validate_scalar_multiplier(factor)
+        return self._scale_by_factor(factor)
+
+    def __rmul__(self, factor):
+        factor = self._validate_scalar_multiplier(factor)
+        return self._scale_by_factor(factor)
+
+    @staticmethod
+    def _validate_scalar_multiplier(factor):
         factor = sympify(factor)
+        if not isinstance(factor, Expr) or not factor.is_commutative:
+            raise TypeError('Multiplier must be a commutative scalar expression')
+        return factor
+
+    def _scale_by_factor(self, factor):
         coords = [simplify(x*factor) for x in self.args]
         return Point(coords, evaluate=False)
 
@@ -286,7 +301,35 @@ class Point(GeometryEntity):
     def __sub__(self, other):
         """Subtract two points, or subtract a factor from this point's
         coordinates."""
-        return self + [-x for x in other]
+        other_point = self._coerce_point_operand(
+            other, "Don't know how to subtract a Point object from {}", allow_morph=True)
+
+        s, o = Point._normalize_dimension(self, other_point)
+        coords = [simplify(a - b) for a, b in zip(s, o)]
+        return Point(coords, evaluate=False)
+
+    def __radd__(self, other):
+        other_point = self._coerce_point_operand(
+            other, "Don't know how to add {} and a Point object", allow_morph=True)
+        return other_point + self
+
+    def __rsub__(self, other):
+        other_point = self._coerce_point_operand(
+            other, "Don't know how to subtract a Point object from {}", allow_morph=True)
+        return other_point - self
+
+    def _coerce_point_operand(self, other, message_template, allow_morph=False):
+        if getattr(other, 'is_Matrix', False):
+            raise GeometryError(message_template.format(other))
+        try:
+            other_point = Point(other, evaluate=False)
+        except (TypeError, ValueError):
+            raise GeometryError(message_template.format(other))
+
+        if not allow_morph and other_point.ambient_dimension != self.ambient_dimension:
+            raise GeometryError(message_template.format(other))
+
+        return other_point
 
     @classmethod
     def _normalize_dimension(cls, *points, **kwargs):

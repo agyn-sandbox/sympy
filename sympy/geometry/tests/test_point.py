@@ -1,7 +1,8 @@
-from sympy import I, Rational, Symbol, pi, sqrt, S
+from sympy import I, Rational, Symbol, pi, sqrt, S, sympify, MatrixSymbol
 from sympy.geometry import Line, Point, Point2D, Point3D, Line3D, Plane
 from sympy.geometry.entity import rotate, scale, translate
 from sympy.matrices import Matrix
+from sympy.geometry.exceptions import GeometryError
 from sympy.utilities.iterables import subsets, permutations, cartes
 from sympy.utilities.pytest import raises, warns
 
@@ -118,6 +119,70 @@ def test_point():
     raises(ValueError, lambda: p3.transform(p3))
     raises(ValueError, lambda: p.transform(Matrix([[1, 0], [0, 1]])))
 
+
+def test_point_scalar_multiplication_commutative():
+    p = Point(1, 3)
+    q = Point(2, -1)
+    half = S.Half
+    two_float = sympify(2.0)
+    a = Symbol('a')
+    nc = Symbol('nc', commutative=False)
+
+    assert 2*p == Point(2, 6)
+    assert p*2 == Point(2, 6)
+    assert q + 2*p == q + p*2
+
+    expected_half = Point(half, S(3)/2)
+    assert half*p == expected_half
+    assert p*half == expected_half
+
+    scaled_float = two_float*p
+    assert scaled_float == Point(2, 6)
+    assert all(coord.is_Float for coord in scaled_float.args)
+    assert p*two_float == scaled_float
+
+    expected_symbolic = Point(a, 3*a)
+    assert a*p == expected_symbolic
+    assert p*a == expected_symbolic
+    assert q + a*p == Point(2 + a, -1 + 3*a)
+
+    raises(TypeError, lambda: nc*p)
+    raises(TypeError, lambda: p*nc)
+
+    identity_matrix = Matrix([[1, 0], [0, 1]])
+    raises(TypeError, lambda: identity_matrix*p)
+    raises(TypeError, lambda: p*identity_matrix)
+
+    A = MatrixSymbol('A', 2, 2)
+    raises(TypeError, lambda: A*p)
+    raises(TypeError, lambda: p*A)
+
+
+def test_point_reverse_add_sub():
+    p = Point(1, 2)
+    a = Symbol('a')
+    tuple_coords = sympify((0.1, 0.2))
+    list_coords = [1, 2]
+    line = Line(Point(0, 0), Point(1, 1))
+    matrix = Matrix([[1, 0], [0, 1]])
+
+    raises(GeometryError, lambda: a + p)
+    raises(GeometryError, lambda: p + a)
+    raises(GeometryError, lambda: a - p)
+    raises(GeometryError, lambda: p - a)
+
+    assert tuple_coords + p == Point2D(sympify(1.1), sympify(2.2), evaluate=False)
+    assert list_coords - Point(3, 4) == Point2D(-2, -2)
+
+    raises(TypeError, lambda: line + p)
+    raises(GeometryError, lambda: p + line)
+    raises(ValueError, lambda: line - p)
+    raises(GeometryError, lambda: p - line)
+
+    raises(GeometryError, lambda: matrix + p)
+    raises(GeometryError, lambda: p + matrix)
+    raises(GeometryError, lambda: matrix - p)
+    raises(GeometryError, lambda: p - matrix)
 
 def test_point3D():
     x = Symbol('x', real=True)
