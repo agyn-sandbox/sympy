@@ -136,6 +136,25 @@ def test_latex_basic():
     assert latex(exp(-p)*log(p)) == r"e^{- p} \log{\left (p \right )}"
 
 
+def test_latex_mul_symbol_variants():
+    assert latex(4*4**x, mul_symbol='times') == r"4 \times 4^{x}"
+    assert latex(4*4**x, mul_symbol='dot') == r"4 \cdot 4^{x}"
+    assert latex(4*4**x, mul_symbol='ldot') == r"4 \,.\, 4^{x}"
+
+    assert latex(1.5e20*x, mul_symbol='dot') == r"1.5 \cdot 10^{20} \cdot x"
+    assert latex(1.5e20*x, mul_symbol='times') == r"1.5 \times 10^{20} \times x"
+
+    assert latex(3*x**2*y, mul_symbol='\\,') == r"3 \, x^{2} \, y"
+    assert latex(4*4**x, mul_symbol='\\,') == r"4 \, 4^{x}"
+    assert latex(1.5e20*x, mul_symbol='\\,') == r"1.5 \, 10^{20} \, x"
+    assert latex(x*y, mul_symbol='\\ast') == r"x \ast y"
+
+    assert latex(1.5e20*x) == r"1.5 \cdot 10^{20} x"
+    assert latex(2*x*y) == "2 x y"
+
+    raises(ValueError, lambda: latex(x*y, mul_symbol=123))
+
+
 def test_latex_builtins():
     assert latex(True) == r"\mathrm{True}"
     assert latex(False) == r"\mathrm{False}"
