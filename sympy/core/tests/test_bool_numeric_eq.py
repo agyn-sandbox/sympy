@@ -1,4 +1,3 @@
-import pytest
 from sympy import S
 
 
@@ -27,4 +26,3 @@ def test_numeric_equality_remains_correct():
     assert (S(0) == S(0.0)) is True
     assert (S(1.0) == S(1)) is True
     assert (S(1) == S(1.0)) is True
-
