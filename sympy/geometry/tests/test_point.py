@@ -161,7 +161,7 @@ def test_point_scalar_multiplication_commutative():
 def test_point_reverse_add_sub():
     p = Point(1, 2)
     a = Symbol('a')
-    tuple_coords = (sympify(0.1), sympify(0.2))
+    tuple_coords = sympify((0.1, 0.2))
     list_coords = [1, 2]
     line = Line(Point(0, 0), Point(1, 1))
     matrix = Matrix([[1, 0], [0, 1]])
