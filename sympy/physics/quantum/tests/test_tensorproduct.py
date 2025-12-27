@@ -1,4 +1,4 @@
-from sympy import I, symbols, Matrix
+from sympy import I, Matrix, Symbol, symbols
 
 from sympy.physics.quantum.commutator import Commutator as Comm
 from sympy.physics.quantum.tensorproduct import TensorProduct
@@ -9,8 +9,9 @@ from sympy.physics.quantum.qubit import Qubit, QubitBra
 from sympy.physics.quantum.operator import OuterProduct
 from sympy.physics.quantum.density import Density
 from sympy.core.trace import Tr
+from sympy.physics.paulialgebra import Pauli
 
-A, B, C = symbols('A,B,C', commutative=False)
+A, B, C, D = symbols('A,B,C,D', commutative=False)
 x = symbols('x')
 
 mat1 = Matrix([[1, 2*I], [1 + I, 3]])
@@ -47,6 +48,17 @@ def test_tensor_product_commutator():
 
 def test_tensor_product_simp():
     assert tensor_product_simp(TP(A, B)*TP(B, C)) == TP(A*B, B*C)
+
+
+def test_tensor_product_pow_distribution():
+    a = Symbol('a', commutative=False)
+    assert tensor_product_simp(TP(1, 1)**2) == TensorProduct(1, 1)
+    assert tensor_product_simp(TP(1, Pauli(3))**2) == TensorProduct(1, 1)
+    assert tensor_product_simp(TP(1, a)**2).subs(a, 1) == TensorProduct(1, 1)
+
+    e = TP(A, B) * TP(C, D)
+    expected = TP((A*C)**2, (B*D)**2)
+    assert tensor_product_simp(e**2) == expected
 
 
 def test_issue_5923():
