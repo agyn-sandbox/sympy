@@ -3441,3 +3441,37 @@ def test_deserialized_poly_equals_original():
         "Deserialized polynomial not equal to original.")
     assert poly.gens == deserialized.gens, (
         "Deserialized polynomial has different generators than original.")
+
+def test_Poly_clear_denoms_EX_zero_canonicalization():
+    from sympy import Poly, symbols
+    from sympy.polys.polyclasses import DMP
+    from sympy.polys.domains import EX
+
+    x = symbols('x')
+    # Construct a Poly with a non-canonical zero rep at ground level: [EX(0)]
+    rep = DMP([EX(0)], EX, 0)
+    p = Poly.new(rep, x)
+
+    coeff, q = p.clear_denoms()
+
+    assert coeff == EX(1)
+    assert q.is_zero is True
+    assert q.as_expr() == 0
+    assert q.rep == Poly(0, x, domain=EX).rep
+
+    # Ensure downstream ops do not crash and behave like zero
+    J, q2 = q.terms_gcd()
+    assert J == (0,)
+    assert q2 == Poly(0, x, domain=EX)
+
+
+def test_Poly_clear_denoms_EX_simple_zero():
+    from sympy import Poly, symbols
+    from sympy.polys.domains import EX
+
+    x = symbols('x')
+    p = Poly(0*x + 0, x, domain=EX)
+    coeff, q = p.clear_denoms()
+    assert coeff == EX(1)
+    assert q.is_zero is True
+    assert q.rep == Poly(0, x, domain=EX).rep
