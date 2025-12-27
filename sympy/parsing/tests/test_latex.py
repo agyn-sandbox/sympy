@@ -319,3 +319,10 @@ def test_failing_not_parseable():
     for latex_str in FAILING_BAD_STRINGS:
         with raises(LaTeXParsingError):
             parse_latex(latex_str)
+
+
+def test_str_parentheses_for_nested_fracs():
+    # Ensure that the string printer preserves parentheses for nested denominators
+    from sympy.parsing.latex import parse_latex
+    assert str(parse_latex(r"rac{a}{rac{1}{b}}")) == "a/(1/b)"
+    assert str(parse_latex(r"rac{rac{a^3+b}{c}}{rac{1}{c^2}}")) == "((a**3 + b)/c)/(1/(c**2))"
