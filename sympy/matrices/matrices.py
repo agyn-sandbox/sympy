@@ -168,16 +168,37 @@ class MatrixDeterminant(MatrixCommon):
         elimination method. This approach is best suited for dense
         symbolic matrices and will result in a determinant with
         minimal number of fractions. It means that less term
-        rewriting is needed on resulting formulae.
+        rewriting is needed on resulting formulae.  If symbolic
+        cancellation fails or produces ``NaN``, the algorithm falls
+        back to the LU-based determinant evaluation.
 
         TODO: Implement algorithm for sparse matrices (SFF),
         http://www.eecis.udel.edu/~saunders/papers/sffge/it5.ps.
         """
 
+        def _has_nan_expr(expr):
+            if expr is S.NaN:
+                return True
+            try:
+                return expr.has(S.NaN)
+            except AttributeError:
+                return False
+
+        def _mat_contains_nan(mat):
+            return any(
+                _has_nan_expr(mat[i, j])
+                for i in range(mat.rows)
+                for j in range(mat.cols)
+            )
+
         # XXX included as a workaround for issue #12362.  Should use `_find_reasonable_pivot` instead
         def _find_pivot(l):
-            for pos,val in enumerate(l):
-                if val:
+            for pos, val in enumerate(l):
+                val = val.expand()
+                if _has_nan_expr(val):
+                    continue
+                is_zero = val.is_zero
+                if is_zero is False:
                     return (pos, val, None, None)
             return (None, None, None, None)
 
@@ -208,12 +229,22 @@ class MatrixDeterminant(MatrixCommon):
             def entry(i, j):
                 ret = (pivot_val*tmp_mat[i, j + 1] - mat[pivot_pos, j + 1]*tmp_mat[i, 0]) / cumm
                 if not ret.is_Atom:
-                    cancel(ret)
+                    ret = cancel(ret)
                 return ret
 
             return sign*bareiss(self._new(mat.rows - 1, mat.cols - 1, entry), pivot_val)
 
-        return cancel(bareiss(self))
+        contains_nan = _mat_contains_nan(self)
+        res = bareiss(self)
+        try:
+            res = cancel(res)
+        except (TypeError, ZeroDivisionError):
+            if not contains_nan:
+                return self._eval_det_lu()
+            raise
+        if _has_nan_expr(res) and not contains_nan:
+            return self._eval_det_lu()
+        return res
 
     def _eval_det_berkowitz(self):
         """ Use the Berkowitz algorithm to compute the determinant."""
