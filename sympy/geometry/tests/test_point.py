@@ -172,6 +172,7 @@ def test_point2d_evaluate_false():
     with evaluate(False):
         assert S('Point2D(Integer(1),Integer(2))') == Point2D(1, 2)
         raises(ValueError, lambda: S('Point2D(Integer(1), I)'))
+        raises(ValueError, lambda: S('Point2D(log(-1), Integer(1))'))
 
     raises(ValueError, lambda: Point2D(1, I))
 
