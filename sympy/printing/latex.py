@@ -638,6 +638,10 @@ class LatexPrinter(Printer):
                 base = self.parenthesize_super(base)
             if expr.base.is_Function:
                 return self._print(expr.base, exp="%s/%s" % (p, q))
+            if (not expr.base.is_Symbol
+                and "^" in base
+                and not (base.startswith('{') and base.endswith('}'))):
+                base = '{' + base + '}'
             return r"%s^{%s/%s}" % (base, p, q)
         elif expr.exp.is_Rational and expr.exp.is_negative and \
                 expr.base.is_commutative:
@@ -673,6 +677,10 @@ class LatexPrinter(Printer):
             and base.endswith(r'\right)')):
             # don't use parentheses around dotted derivative
             base = base[6: -7]  # remove outermost added parens
+        if (not expr.base.is_Symbol
+            and "^" in base
+            and not (base.startswith('{') and base.endswith('}'))):
+            base = '{' + base + '}'
         return template % (base, exp)
 
     def _print_UnevaluatedExpr(self, expr):

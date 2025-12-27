@@ -104,6 +104,16 @@ def test_create():
     assert o.apply_operator(BKet([n])) == o*BKet([n])
 
 
+def test_secondquant_latex_power_braces():
+    a, i = symbols('a i')
+    assert latex(Bd(i)) == r"b^\dagger_{i}"
+    assert latex(Bd(i)**2) == r"{b^\dagger_{i}}^{2}"
+    assert latex(Fd(i)**3) == r"{a^\dagger_{i}}^{3}"
+    assert latex(B(i)**2) == r"b_{i}^{2}"
+    comm_tex = latex(Commutator(Bd(a)**2, B(a)))
+    assert r"{b^\dagger_{a}}^{2}" in comm_tex
+
+
 def test_annihilate():
     i, j, n, m = symbols('i,j,n,m')
     o = B(i)
