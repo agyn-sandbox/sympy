@@ -16,6 +16,16 @@ def test_symbol_unset():
     assert x.is_number is False
 
 
+def test_symbol_finite_from_even_integer():
+    m = Symbol('m', even=True)
+    i = Symbol('i', integer=True)
+    x = Symbol('x', real=True)
+
+    assert m.is_finite is True
+    assert i.is_finite is True
+    assert x.is_finite is None
+
+
 def test_zero():
     z = Integer(0)
     assert z.is_commutative is True
@@ -98,26 +108,26 @@ def test_infinity():
     oo = S.Infinity
 
     assert oo.is_commutative is True
-    assert oo.is_integer is None
-    assert oo.is_rational is None
+    assert oo.is_integer is False
+    assert oo.is_rational is False
     assert oo.is_algebraic is None
     assert oo.is_transcendental is None
     assert oo.is_real is True
     assert oo.is_complex is True
-    assert oo.is_noninteger is None
-    assert oo.is_irrational is None
+    assert oo.is_noninteger is True
+    assert oo.is_irrational is True
     assert oo.is_imaginary is False
     assert oo.is_positive is True
     assert oo.is_negative is False
     assert oo.is_nonpositive is False
     assert oo.is_nonnegative is True
-    assert oo.is_even is None
-    assert oo.is_odd is None
+    assert oo.is_even is False
+    assert oo.is_odd is False
     assert oo.is_finite is False
     assert oo.is_infinite is True
     assert oo.is_comparable is True
     assert oo.is_prime is False
-    assert oo.is_composite is None
+    assert oo.is_composite is False
     assert oo.is_number is True
 
 
@@ -125,21 +135,21 @@ def test_neg_infinity():
     mm = S.NegativeInfinity
 
     assert mm.is_commutative is True
-    assert mm.is_integer is None
-    assert mm.is_rational is None
+    assert mm.is_integer is False
+    assert mm.is_rational is False
     assert mm.is_algebraic is None
     assert mm.is_transcendental is None
     assert mm.is_real is True
     assert mm.is_complex is True
-    assert mm.is_noninteger is None
-    assert mm.is_irrational is None
+    assert mm.is_noninteger is True
+    assert mm.is_irrational is True
     assert mm.is_imaginary is False
     assert mm.is_positive is False
     assert mm.is_negative is True
     assert mm.is_nonpositive is True
     assert mm.is_nonnegative is False
-    assert mm.is_even is None
-    assert mm.is_odd is None
+    assert mm.is_even is False
+    assert mm.is_odd is False
     assert mm.is_finite is False
     assert mm.is_infinite is True
     assert mm.is_comparable is True
@@ -244,6 +254,11 @@ def test_neg_rational():
     assert r.is_positive is False
     assert r.is_negative is True
     assert r.is_nonpositive is True
+
+
+def test_simple_rational_finite():
+    assert Rational(2).is_finite is True
+    assert Rational(-3).is_finite is True
 
 
 def test_pi():
