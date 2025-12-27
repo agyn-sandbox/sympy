@@ -985,7 +985,7 @@ class MutableSparseMatrix(SparseMatrix, MatrixBase):
         >>> C == A.row_insert(A.rows, Matrix(B))
         True
         """
-        if not self:
+        if self.rows == 0:
             return type(self)(other)
         A, B = self, other
         if not A.cols == B.cols:
@@ -1191,7 +1191,7 @@ class MutableSparseMatrix(SparseMatrix, MatrixBase):
         >>> C == A.col_insert(A.cols, B)
         True
         """
-        if not self:
+        if self.cols == 0:
             return type(self)(other)
         A, B = self, other
         if not A.rows == B.rows:
