@@ -11,6 +11,7 @@ PRECEDENCE = {
     "Relational": 35,
     "Add": 40,
     "Mul": 50,
+    "Unary": 55,
     "Pow": 60,
     "Func": 70,
     "Not": 100,
@@ -48,6 +49,9 @@ PRECEDENCE_VALUES = {
     "KroneckerProduct": PRECEDENCE["Mul"],
     "Equality": PRECEDENCE["Mul"],
     "Unequality": PRECEDENCE["Mul"],
+    # Align Mod with the multiplicative tier so equal-precedence factors
+    # preserve their AST grouping via explicit parentheses.
+    "Mod": PRECEDENCE["Mul"],
 }
 
 # Sometimes it's not enough to assign a fixed precedence value to a

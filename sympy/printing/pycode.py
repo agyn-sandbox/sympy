@@ -5,8 +5,9 @@ This module contains python code printers for plain python as well as NumPy & Sc
 """
 from collections import defaultdict
 from itertools import chain
-from sympy.core import S
-from .precedence import precedence
+from sympy.core import S, Mul, Pow
+from sympy.core.mul import _keep_coeff
+from .precedence import precedence, PRECEDENCE
 from .codeprinter import CodePrinter
 
 _kw_py2and3 = {
@@ -427,6 +428,70 @@ class AbstractPythonCodePrinter(CodePrinter):
 
 
 class PythonCodePrinter(AbstractPythonCodePrinter):
+
+    class _PREC:
+        MUL = PRECEDENCE["Mul"]
+        UNARY = PRECEDENCE["Unary"]
+
+    def _print_Mul(self, expr):
+        """Ensure correct parentheses around Mod in products and under unary minus.
+        """
+        prec = precedence(expr)
+
+        c, e = expr.as_coeff_Mul()
+        sign = ""
+        if c < 0:
+            expr = _keep_coeff(-c, e)
+            sign = "-"
+            if not expr.is_Mul:
+                return sign + self.parenthesize(expr, self._PREC.UNARY)
+
+        if self.order not in ("old", "none"):
+            args = expr.as_ordered_factors()
+        else:
+            args = Mul.make_args(expr)
+
+        a = []
+        b = []
+        pow_paren = []
+        for item in args:
+            if item.is_commutative and item.is_Pow and item.exp.is_Rational and item.exp.is_negative:
+                if item.exp != -1:
+                    b.append(Pow(item.base, -item.exp, evaluate=False))
+                else:
+                    if len(item.args[0].args) != 1 and isinstance(item.base, Mul):
+                        pow_paren.append(item)
+                    b.append(Pow(item.base, -item.exp))
+            else:
+                a.append(item)
+
+        if not a:
+            a = [S.One]
+
+        def _paren_factor(f, level):
+            try:
+                is_mod = (f.func.__name__ == "Mod")
+            except Exception:
+                is_mod = False
+            par_level = self._PREC.MUL if is_mod else level
+            txt = self.parenthesize(f, par_level)
+            if is_mod and not (txt.startswith("(") and txt.endswith(")")):
+                txt = f"({txt})"
+            return txt
+
+        a_str = [_paren_factor(x, prec) for x in a]
+        b_str = [_paren_factor(x, prec) for x in b]
+
+        for item in pow_paren:
+            if item.base in b:
+                b_str[b.index(item.base)] = f"({b_str[b.index(item.base)]})"
+
+        if not b:
+            return sign + "*".join(a_str)
+        elif len(b) == 1:
+            return sign + "*".join(a_str) + "/" + b_str[0]
+        else:
+            return sign + "*".join(a_str) + "/(" + "*".join(b_str) + ")"
 
     def _print_sign(self, e):
         return '(0.0 if {e} == 0 else {f}(1, {e}))'.format(
