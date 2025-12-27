@@ -45,7 +45,7 @@ of partions.
 partitions::
 
     >>> from sympy.utilities.iterables import partitions
-    >>> [p.copy() for s, p in partitions(7, m=2, size=True) if s == 2]
+    >>> [p for s, p in partitions(7, m=2, size=True) if s == 2]
     [{1: 1, 6: 1}, {2: 1, 5: 1}, {3: 1, 4: 1}]
 
 multiset_partitions::
