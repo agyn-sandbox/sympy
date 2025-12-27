@@ -257,13 +257,15 @@ def test_PolyElement_as_expr():
     g = 3*X**2*Y - X*Y*Z + 7*Z**3 + 1
 
     assert f != g
-    assert f.as_expr() == g
 
-    X, Y, Z = symbols("x,y,z")
-    g = 3*X**2*Y - X*Y*Z + 7*Z**3 + 1
+    default_expr = f.as_expr()
+    assert default_expr == g
+    assert default_expr.free_symbols == set(R.symbols)
 
-    assert f != g
-    assert f.as_expr(X, Y, Z) == g
+    U, V, W = symbols('U, V, W')
+    provided_expr = f.as_expr(U, V, W)
+    assert provided_expr == 3*U**2*V - U*V*W + 7*W**3 + 1
+    assert provided_expr.free_symbols == {U, V, W}
 
     raises(ValueError, lambda: f.as_expr(X))
 
