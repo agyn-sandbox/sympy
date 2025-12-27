@@ -7,6 +7,36 @@ from sympy.sets.fancysets import (Integers, Naturals, Reals, Range,
 from sympy.sets.sets import UniversalSet, imageset, ProductSet
 
 
+def _linear_solutions(expr, var):
+    """Return linear solutions for factors of ``expr`` in ``var``.
+
+    Returns a tuple ``(solutions, has_factors)`` where ``solutions`` is a
+    tuple of roots obtained from linear factors (empty if none) and
+    ``has_factors`` indicates whether any factors depending on ``var`` were
+    encountered. If a non-linear factor or solver failure is found, ``solutions``
+    is ``None`` and ``has_factors`` is ``True`` to signal the caller to fall
+    back on a ConditionSet."""
+
+    from sympy.solvers.solvers import solve_linear
+
+    factors = [factor for factor in Mul.make_args(expr) if factor.has(var)]
+    if not factors:
+        return tuple(), False
+
+    solutions = []
+    for factor in factors:
+        try:
+            solved_var, sol = solve_linear(factor, 0)
+        except (ValueError, NotImplementedError):
+            return None, True
+        if solved_var == var:
+            solutions.append(sol)
+        else:
+            return None, True
+
+    return tuple(solutions), True
+
+
 @dispatch(ConditionSet, ConditionSet)  # type: ignore # noqa:F811
 def intersection_sets(a, b): # noqa:F811
     return None
@@ -278,7 +308,7 @@ def intersection_sets(self, other): # noqa:F811
 
     if other == S.Reals:
         from sympy.core.function import expand_complex
-        from sympy.solvers.solvers import denoms, solve_linear
+        from sympy.solvers.solvers import denoms
         from sympy.core.relational import Eq
         f = self.lamda.expr
         n = self.lamda.variables[0]
@@ -302,20 +332,8 @@ def intersection_sets(self, other): # noqa:F811
         elif im.free_symbols - {n}:
             return None
         else:
-            factors = [factor for factor in Mul.make_args(im) if factor.has(n)]
-            solutions = []
-            linear_only = True
-            for factor in factors:
-                try:
-                    var, sol = solve_linear(factor, 0)
-                except (ValueError, NotImplementedError):
-                    var = sol = None
-                if var == n:
-                    solutions.append(sol)
-                else:
-                    linear_only = False
-                    break
-            if linear_only and solutions:
+            solutions, _ = _linear_solutions(im, n)
+            if solutions:
                 restricted_base = restricted_base.intersect(FiniteSet(*solutions))
             else:
                 restricted_base = restricted_base.intersect(
@@ -324,22 +342,10 @@ def intersection_sets(self, other): # noqa:F811
         for denom in denoms(f):
             if not denom.has(n):
                 continue
-            denom_factors = [factor for factor in Mul.make_args(denom) if factor.has(n)]
-            if not denom_factors:
+            denom_solutions, has_factors = _linear_solutions(denom, n)
+            if not has_factors:
                 continue
-            denom_solutions = []
-            denom_linear_only = True
-            for factor in denom_factors:
-                try:
-                    var, sol = solve_linear(factor, 0)
-                except (ValueError, NotImplementedError):
-                    var = sol = None
-                if var == n:
-                    denom_solutions.append(sol)
-                else:
-                    denom_linear_only = False
-                    break
-            if denom_linear_only and denom_solutions:
+            if denom_solutions:
                 restricted_base = restricted_base - FiniteSet(*denom_solutions)
             else:
                 restricted_base = restricted_base - ConditionSet(n, Eq(denom, 0), base_set)
