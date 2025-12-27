@@ -156,11 +156,21 @@ class LatexPrinter(Printer):
             "times": r" \times "
         }
 
-        self._settings['mul_symbol_latex'] = \
-            mul_symbol_table[self._settings['mul_symbol']]
+        mul_symbol = self._settings['mul_symbol']
 
-        self._settings['mul_symbol_latex_numbers'] = \
-            mul_symbol_table[self._settings['mul_symbol'] or 'dot']
+        if mul_symbol in mul_symbol_table:
+            self._settings['mul_symbol_latex'] = mul_symbol_table[mul_symbol]
+            self._settings['mul_symbol_latex_numbers'] = (
+                mul_symbol_table[mul_symbol or 'dot']
+            )
+        elif isinstance(mul_symbol, str):
+            custom = f" {mul_symbol} "
+            self._settings['mul_symbol_latex'] = custom
+            self._settings['mul_symbol_latex_numbers'] = custom
+        else:
+            raise ValueError(
+                "mul_symbol must be one of None, 'ldot', 'dot', 'times', or a str LaTeX fragment"
+            )
 
         self._delim_dict = {'(': ')', '[': ']'}
 
@@ -2155,10 +2165,14 @@ def latex(expr, **settings):
     \frac{1}{2 \pi} \int r\, dr
 
     mul_symbol: The symbol to use for multiplication. Can be one of None,
-    "ldot", "dot", or "times".
+    "ldot", "dot", "times", or any custom string containing LaTeX
+    markup.
 
     >>> print(latex((2*tau)**sin(Rational(7,2)), mul_symbol="times"))
     \left(2 \times \tau\right)^{\sin{\left (\frac{7}{2} \right )}}
+
+    >>> print(latex(x*y, mul_symbol="\\ast"))
+    x \ast y
 
     inv_trig_style: How inverse trig functions should be displayed. Can be one
     of "abbreviated", "full", or "power". Defaults to "abbreviated".
