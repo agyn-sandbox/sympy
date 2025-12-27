@@ -2,6 +2,17 @@ from sympy import Abs, S, Symbol, I, Rational, PurePoly
 from sympy.matrices import Matrix, SparseMatrix, eye, zeros, ShapeError
 from sympy.utilities.pytest import raises
 
+
+def test_sparse_hstack_vstack_zero_dim():
+    zero_row_matrices = [SparseMatrix.zeros(0, n) for n in range(4)]
+    assert SparseMatrix.hstack(*zero_row_matrices).shape == (0, 6)
+
+    zero_col_matrices = [SparseMatrix.zeros(n, 0) for n in range(4)]
+    assert SparseMatrix.vstack(*zero_col_matrices).shape == (6, 0)
+
+    assert SparseMatrix.zeros(0, 2).row_join(Matrix.zeros(0, 3)).shape == (0, 5)
+    assert SparseMatrix.zeros(2, 0).col_join(Matrix.zeros(3, 0)).shape == (5, 0)
+
 def test_sparse_matrix():
     def sparse_eye(n):
         return SparseMatrix.eye(n)
