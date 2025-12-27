@@ -175,7 +175,9 @@ class NDimArray(object):
         9
 
         """
-        if self._rank == 0:\n            return 1\n        return self._loop_size
+        if self._rank == 0:
+            return 1
+        return self._loop_size
 
     @property
     def shape(self):
