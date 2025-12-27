@@ -1,5 +1,5 @@
 from sympy import (Basic, Symbol, sin, cos, exp, sqrt, Rational, Float, re, pi,
-        sympify, Add, Mul, Pow, Mod, I, log, S, Max, symbols, oo, zoo, Integer,
+        sympify, simplify, Add, Mul, Pow, Mod, I, log, S, Max, symbols, oo, zoo, Integer,
         sign, im, nan, Dummy, factorial, comp, refine
 )
 from sympy.core.compatibility import long, range
@@ -1985,6 +1985,14 @@ def test_issue_8247_8354():
 def test_Add_is_zero():
     x, y = symbols('x y', zero=True)
     assert (x + y).is_zero
+
+
+def test_add_is_zero_complex_cancellation():
+    e = -2*I + (1 + I)**2
+    assert e.is_zero in (True, None)
+    assert simplify(e).is_zero is True
+    assert (1 + I).is_zero is False
+    assert (-2*I + 2*I).is_zero is True
 
 
 def test_issue_14392():
