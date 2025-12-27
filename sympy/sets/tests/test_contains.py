@@ -3,6 +3,8 @@ from sympy.core.numbers import oo
 from sympy.core.relational import Eq
 from sympy.core.singleton import S
 from sympy.core.symbol import Symbol
+from sympy.functions.elementary.piecewise import Piecewise
+from sympy.sets import ConditionSet
 from sympy.sets.contains import Contains
 from sympy.sets.sets import (FiniteSet, Interval)
 from sympy.testing.pytest import raises
@@ -38,13 +40,35 @@ def test_binary_symbols():
         ).binary_symbols == {y, z}
 
 
-def test_as_set():
+def test_as_set_basic_sets():
     x = Symbol('x')
-    y = Symbol('y')
-    # Contains is a BooleanFunction whose value depends on an arg's
-    # containment in a Set -- rewriting as a Set is not yet implemented
-    raises(NotImplementedError, lambda:
-           Contains(x, FiniteSet(y)).as_set())
+
+    assert Contains(x, S.Reals).as_set() is S.Reals
+    assert Contains(x, Interval(0, 1)).as_set() == Interval(0, 1)
+
+
+def test_as_set_condition_set_fallback():
+    x = Symbol('x')
+
+    dependent = Contains(x, Interval(x, oo)).as_set()
+    assert isinstance(dependent, ConditionSet)
+    assert dependent.sym == x
+    assert dependent.condition == Contains(x, Interval(x, oo))
+    assert dependent.base_set is S.UniversalSet
+
+    shifted = Contains(x + 1, Interval(0, 1)).as_set()
+    assert isinstance(shifted, ConditionSet)
+    assert shifted.sym == x
+    assert shifted.condition == Contains(x + 1, Interval(0, 1))
+    assert shifted.base_set is S.UniversalSet
+
+
+def test_piecewise_contains_condition():
+    x = Symbol('x')
+
+    pw = Piecewise((6, Contains(x, S.Reals)), (7, True))
+    pairs = pw.as_expr_set_pairs()
+    assert pairs == [(6, S.Reals)]
 
 def test_type_error():
     # Pass in a parameter not of type "set"

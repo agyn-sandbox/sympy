@@ -45,4 +45,17 @@ class Contains(BooleanFunction):
             isinstance(i, (Eq, Ne))])
 
     def as_set(self):
-        raise NotImplementedError()
+        from sympy.core.basic import Basic
+        from sympy.sets.conditionset import ConditionSet
+
+        free = self.free_symbols
+        if len(free) != 1:
+            raise NotImplementedError()
+
+        symbol = free.pop()
+        element, container = self.args
+
+        if element == symbol and symbol not in container.free_symbols:
+            return container
+
+        return Basic.__new__(ConditionSet, symbol, self, S.UniversalSet)
