@@ -275,8 +275,33 @@ class Point(GeometryEntity):
         sympy.geometry.point.Point.scale
         """
         factor = sympify(factor)
+        # Only allow commutative scalar expressions to scale a point
+        if not isinstance(factor, Expr) or factor.is_commutative is not True:
+            raise TypeError("Point can only be scaled by a commutative scalar expression")
         coords = [simplify(x*factor) for x in self.args]
         return Point(coords, evaluate=False)
+
+    def __rmul__(self, factor):
+        """Right-multiply point's coordinates by a scalar factor.
+
+        Enable scalar*Point where the scalar is a commutative SymPy expression
+        (e.g., Integer, Rational, Float, Symbol) or Python numeric. This mirrors
+        __mul__ to ensure symmetry of scalar multiplication.
+
+        Examples
+        ========
+
+        >>> from sympy.geometry import Point
+        >>> from sympy import S, symbols
+        >>> p = Point(1, 2)
+        >>> 2*p
+        Point2D(2, 4)
+        >>> S(1)/2*p
+        Point2D(1/2, 1)
+        >>> symbols('a')*p
+        Point2D(a, 2*a)
+        """
+        return self.__mul__(factor)
 
     def __neg__(self):
         """Negate the point."""
