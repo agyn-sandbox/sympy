@@ -1117,7 +1117,31 @@ class EvaluateFalseTransformer(ast.NodeTransformer):
         'cos', 'cot', 'csc', 'sec', 'sin', 'tan',
         'cosh', 'coth', 'csch', 'sech', 'sinh', 'tanh',
         'exp', 'ln', 'log', 'sqrt', 'cbrt',
+        'Eq', 'Ne', 'Lt', 'Le', 'Gt', 'Ge', 'And',
     )
+    comparison_operators = {
+        ast.Eq: 'Eq',
+        ast.NotEq: 'Ne',
+        ast.Lt: 'Lt',
+        ast.LtE: 'Le',
+        ast.Gt: 'Gt',
+        ast.GtE: 'Ge',
+    }
+
+    def _evaluate_false_keyword(self):
+        return ast.keyword(
+            arg='evaluate',
+            value=ast.NameConstant(value=False, ctx=ast.Load())
+        )
+
+    def _make_call(self, func_name, args):
+        return ast.Call(
+            func=ast.Name(id=func_name, ctx=ast.Load()),
+            args=args,
+            keywords=[self._evaluate_false_keyword()],
+            starargs=None,
+            kwargs=None
+        )
 
     def flatten(self, args, func):
         result = []
@@ -1185,6 +1209,25 @@ class EvaluateFalseTransformer(ast.NodeTransformer):
 
             return new_node
         return node
+
+    def visit_Compare(self, node):
+        if any(op.__class__ not in self.comparison_operators for op in node.ops):
+            return self.generic_visit(node)
+
+        left = self.visit(node.left)
+        comparators = [self.visit(comp) for comp in node.comparators]
+        relational_names = [self.comparison_operators[op.__class__] for op in node.ops]
+
+        if len(node.ops) == 1:
+            return self._make_call(relational_names[0], [left, comparators[0]])
+
+        calls = []
+        current_left = left
+        for func_name, right in zip(relational_names, comparators):
+            calls.append(self._make_call(func_name, [current_left, right]))
+            current_left = right
+
+        return self._make_call('And', calls)
 
     def visit_Call(self, node):
         new_node = self.generic_visit(node)
