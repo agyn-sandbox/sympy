@@ -386,3 +386,17 @@ def test_numerical_accuracy_functions():
     assert prntr.doprint(expm1(x)) == 'numpy.expm1(x)'
     assert prntr.doprint(log1p(x)) == 'numpy.log1p(x)'
     assert prntr.doprint(cosm1(x)) == 'scipy.special.cosm1(x)'
+
+def test_pycode_unary_minus_mod():
+    from sympy import symbols, Mod
+    a, b = symbols('a b')
+    assert pycode(-Mod(a, b)) == "-(a % b)"
+
+
+def test_pycode_mul_mod_parentheses():
+    from sympy import symbols, Mod, Mul
+    expr, a, b = symbols('expr a b')
+    assert pycode(expr*Mod(a, b)) == "expr*(a % b)"
+    left = Mul(Mod(a, b), expr, evaluate=False)
+    s = pycode(left)
+    assert s in {"(a % b)*expr", "expr*(a % b)"}
