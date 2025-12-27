@@ -324,5 +324,5 @@ def test_failing_not_parseable():
 def test_str_parentheses_for_nested_fracs():
     # Ensure that the string printer preserves parentheses for nested denominators
     from sympy.parsing.latex import parse_latex
-    assert str(parse_latex(r"rac{a}{rac{1}{b}}")) == "a/(1/b)"
-    assert str(parse_latex(r"rac{rac{a^3+b}{c}}{rac{1}{c^2}}")) == "((a**3 + b)/c)/(1/(c**2))"
+    assert str(parse_latex("\\frac{a}{\\frac{1}{b}}")) == "a/(1/b)"
+    assert str(parse_latex("\\frac{\\frac{a^3+b}{c}}{\\frac{1}{c^2}}")) == "((a**3 + b)/c)/(1/(c**2))"
