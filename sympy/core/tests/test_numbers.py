@@ -370,6 +370,37 @@ def test_Rational_new():
     assert n.p == -2
 
 
+def test_rational_two_argument_construction_mixed_types():
+    target = Rational(1, 200)
+
+    assert Rational("0.5", "100") == target
+    assert Rational(0.5, 100) == target
+    assert Rational("0.5/100") == target
+    assert Rational("0.5") / Rational("100") == target
+
+    assert Rational("0.5", 100) == target
+    assert Rational(0.5, "100") == target
+    assert Rational(Rational(1, 2), "100") == target
+
+    assert Rational("3/4", "2") == Rational(3, 8)
+    assert Rational("1", "3/4") == Rational(4, 3)
+    assert Rational("1e-2", "100") == Rational(1, 10000)
+
+    assert Rational("-0.5", "100") == Rational(-1, 200)
+    assert Rational("0.5", "-100") == Rational(-1, 200)
+    assert Rational("-0.5", "-100") == target
+
+    property_pairs = [
+        (0.5, 100),
+        ("0.5", "100"),
+        ("1e-2", "100"),
+    ]
+    for p, q in property_pairs:
+        r = Rational(p, q)
+        assert r == Rational(f"{p}/{q}")
+        assert r == Rational(p) / Rational(q)
+
+
 def test_Number_new():
     """"
     Test for Number constructor
