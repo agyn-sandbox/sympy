@@ -19,7 +19,7 @@ from sympy.physics.units.definitions import (amu, au, centimeter, coulomb,
     day, foot, grams, hour, inch, kg, km, m, meter, millimeter,
     minute, quart, s, second, speed_of_light, bit,
     byte, kibibyte, mebibyte, gibibyte, tebibyte, pebibyte, exbibyte,
-    kilogram, gravitational_constant)
+    kilogram, gravitational_constant, eV, hbar)
 
 from sympy.physics.units.definitions.dimension_definitions import (
     Dimension, charge, length, time, temperature, pressure,
@@ -28,6 +28,7 @@ from sympy.physics.units.definitions.dimension_definitions import (
 from sympy.physics.units.prefixes import PREFIXES, kilo
 from sympy.physics.units.quantities import PhysicalConstant, Quantity
 from sympy.physics.units.systems import SI
+from sympy.physics.units.systems.natural import natural
 from sympy.testing.pytest import XFAIL, raises, warns_deprecated_sympy
 
 k = PREFIXES["k"]
@@ -287,6 +288,14 @@ def test_collect_factor_and_dimension_mismatched_dimensions_raise():
     SI.set_quantity_scale_factor(time_q, second)
 
     raises(ValueError, lambda: SI._collect_factor_and_dimension(vel + time_q))
+
+
+def test_collect_factor_and_dimension_without_dimension_system():
+    factor, dimension = natural._collect_factor_and_dimension(eV + 2*eV)
+    assert factor == 3 * eV.scale_factor
+    assert dimension == eV.dimension
+
+    raises(ValueError, lambda: natural._collect_factor_and_dimension(hbar + eV))
 
 
 def test_mul_div():
