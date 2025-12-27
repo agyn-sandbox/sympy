@@ -13,9 +13,10 @@ from sympy.stats import (P, E, where, density, variance, covariance, skewness,
                          moment, cmoment, smoment)
 
 from sympy import (Symbol, Abs, exp, S, N, pi, simplify, Interval, erf, erfc,
-                   Eq, log, lowergamma, Sum, symbols, sqrt, And, gamma, beta,
+                   Eq, log, lowergamma, uppergamma, Sum, symbols, sqrt, And, gamma, beta,
                    Piecewise, Integral, sin, cos, besseli, factorial, binomial,
                    floor, expand_func, Rational, I)
+from sympy.functions.special.hyper import hyper
 
 
 from sympy.stats.crv_types import NormalDistribution
