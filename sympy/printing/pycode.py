@@ -363,13 +363,12 @@ class PythonCodePrinter(AbstractPythonCodePrinter):
         Supports multiple indices as a single bracketed, comma-separated tuple
         (e.g., A[i, j]) and symbolic indices via self._print.
         """
-        base = expr.base
-        if hasattr(base, 'label'):
-            base_str = self._print(base.label)
-        else:
-            base_str = self._print(base)
+        base_str = self._print(expr.base)
         indices_str = ', '.join(self._print(index) for index in expr.indices)
         return '{}[{}]'.format(base_str, indices_str)
+
+    def _print_IndexedBase(self, expr):
+        return self._print(expr.label)
 
     def _print_Idx(self, expr):
         """Print index labels for Idx."""
