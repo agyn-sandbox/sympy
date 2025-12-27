@@ -329,10 +329,7 @@ class StrPrinter(Printer):
             # Detect a leading negative coefficient in matrix products
             if getattr(term, 'is_MatMul', False):
                 coeff, matrices = term.as_coeff_matrices()
-                try:
-                    is_neg = coeff.is_Number and coeff.is_negative
-                except AttributeError:
-                    is_neg = False
+                is_neg = coeff.is_Number and coeff.is_negative
                 if is_neg:
                     neg = True
                     # Strip the sign from the coefficient

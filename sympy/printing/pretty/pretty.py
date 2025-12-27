@@ -845,10 +845,7 @@ class PrettyPrinter(Printer):
             pos_term = term
             if getattr(term, 'is_MatMul', False):
                 coeff, matrices = term.as_coeff_matrices()
-                try:
-                    is_neg = coeff.is_Number and coeff.is_negative
-                except AttributeError:
-                    is_neg = False
+                is_neg = coeff.is_Number and coeff.is_negative
                 if is_neg:
                     neg = True
                     abs_coeff = -coeff
