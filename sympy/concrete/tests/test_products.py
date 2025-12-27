@@ -2,8 +2,10 @@ from sympy import (symbols, Symbol, product, factorial, rf, sqrt, cos,
                    Function, Product, Rational, Sum, oo, exp, log, S)
 from sympy.utilities.pytest import raises
 from sympy import simplify
+from sympy.functions.special.q_functions import q_pochhammer
 
 a, k, n, m, x = symbols('a,k,n,m,x', integer=True)
+b, q = symbols('b q')
 f = Function('f')
 
 
@@ -215,6 +217,30 @@ def test_multiple_products():
 
 def test_rational_products():
     assert product(1 + 1/k, (k, 1, n)) == rf(2, n)/factorial(n)
+
+
+def test_product_additive_geometric_rule():
+    expr = Product(n + 1/2**k, (k, 0, n - 1)).doit()
+    expected = n**n * q_pochhammer(-S.One/n, S.Half, n)
+    assert simplify(expr/expected) == 1
+
+    for value in range(1, 6):
+        evaluated = Product(value + S.One/2**k, (k, 0, value - 1)).doit()
+        direct = S.One
+        for k_val in range(value):
+            direct *= value + S.One/2**k_val
+        assert evaluated == direct
+
+
+def test_product_additive_non_geometric_stays_unevaluated():
+    expr = Product(k**(S(2)/3) + 1, (k, 0, n - 1)).doit()
+    assert isinstance(expr, Product)
+
+
+def test_product_additive_negative_power_rule():
+    expr = Product(a + b*q**(-k), (k, 0, n - 1)).doit()
+    expected = a**n * q_pochhammer(-b/a, q**(-1), n)
+    assert simplify(expr/expected) == 1
 
 
 def test_special_products():
