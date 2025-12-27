@@ -5,7 +5,7 @@ import os
 import tempfile
 import shutil
 
-from sympy.core import symbols, Eq
+from sympy.core import symbols, Eq, S
 from sympy.core.compatibility import StringIO
 from sympy.utilities.autowrap import (autowrap, binary_function,
             CythonCodeWrapper, UfuncifyCodeWrapper, CodeWrapper)
@@ -184,6 +184,22 @@ setup(ext_modules=cythonize(ext_mods, **cy_opts))
     assert setup_text == expected
 
     TmpFileManager.cleanup()
+
+
+def test_cython_wrapper_array_arg_not_in_expr():
+    from sympy import MatrixSymbol
+
+    x = MatrixSymbol('x', 2, 1)
+    routine = make_routine("autofunc", S.One, argument_sequence=(x,))
+
+    c_prototype = C99CodeGen().get_prototype(routine)
+    assert 'double *x' in c_prototype
+
+    cython_wrapper = CythonCodeWrapper(C99CodeGen())
+    source = get_string(cython_wrapper.dump_pyx, [routine])
+
+    assert "double *x" in source
+    assert "np.ndarray[np.double_t, ndim=2]" in source
 
 def test_cython_wrapper_unique_dummyvars():
     from sympy import Dummy, Equality
