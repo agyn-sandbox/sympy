@@ -6346,14 +6346,30 @@ def factor(f, *gens, **args):
                 partials[p] = fac
         return f.xreplace(partials)
 
+    extension_arg = args.get('extension', None)
+
     try:
-        return _generic_factor(f, gens, args, method='factor')
+        result = _generic_factor(f, gens, args, method='factor')
     except PolynomialError as msg:
         if not f.is_commutative:
             from sympy.core.exprtools import factor_nc
             return factor_nc(f)
         else:
             raise PolynomialError(msg)
+
+    if extension_arg and isinstance(extension_arg, (list, tuple)):
+        if not (result.is_Mul or result.is_Pow):
+            alt = factor(f, *gens)
+            if alt != result:
+                result = alt
+        quotient_expr = (f / result).cancel()
+        quotient_num, quotient_den = quotient_expr.as_numer_denom()
+        if quotient_den == 1:
+            quotient = quotient_num
+            if quotient != 1 and quotient.is_polynomial(*gens):
+                result = result * factor(quotient, *gens)
+
+    return result
 
 
 @public

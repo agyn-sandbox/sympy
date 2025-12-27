@@ -1152,7 +1152,7 @@ def dmp_ext_factor(f, u, K):
     factors = dmp_factor_list_include(r, u, K.dom)
 
     if len(factors) == 1:
-        factors = [f]
+        factors = [F]
     else:
         H = dmp_raise([K.one, s*K.unit], u, 0, K)
 

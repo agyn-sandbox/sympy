@@ -2465,6 +2465,23 @@ def test_factor():
 
     raises(FlagError, lambda: factor(x**2 - 1, polys=True))
 
+
+def test_factor_extension_I_multivariate_linear():
+    z = expand((x - 1)*(y - 1))
+
+    assert factor(z) == (x - 1)*(y - 1)
+    assert factor(z, extension=[I]) == (x - 1)*(y - 1)
+
+
+def test_factor_extension_I_multivariate_preserve_unrelated_factors():
+    z2 = expand((x - 1)*(y - 1)*(x + 2))
+
+    assert factor(z2, extension=[I]) == (x - 1)*(y - 1)*(x + 2)
+
+
+def test_factor_extension_univariate_no_regression():
+    assert factor(x**2 + 1, x, extension=I) == (x - I)*(x + I)
+
     assert factor([x, Eq(x**2 - y**2, Tuple(x**2 - z**2, 1/x + 1/y))]) == \
         [x, Eq((x - y)*(x + y), Tuple((x - z)*(x + z), (x + y)/x/y))]
 
