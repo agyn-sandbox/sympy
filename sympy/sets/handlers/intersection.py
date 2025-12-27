@@ -290,36 +290,61 @@ def intersection_sets(self, other): # noqa:F811
         im = expand_complex(im)
 
         re = re.subs(n_, n)
-        im = im.subs(n_, n)
-        ifree = im.free_symbols
+        im = expand_complex(im.subs(n_, n))
         lam = Lambda(n, re)
+
+        restricted_base = base_set
+
         if im.is_zero:
-            # allow re-evaluation
-            # of self in this case to make
-            # the result canonical
-            pass
+            restricted_base = base_set
         elif im.is_zero is False:
             return S.EmptySet
-        elif ifree != {n}:
+        elif im.free_symbols - {n}:
             return None
         else:
-            # univarite imaginary part in same variable
-            x, xis = zip(*[solve_linear(i, 0) for i in Mul.make_args(im) if n in i.free_symbols])
-            if x and all(i == n for i in x):
-                base_set -= FiniteSet(xis)
-            else:
-                base_set -= ConditionSet(n, Eq(im, 0), S.Integers)
-        # exclude values that make denominators 0
-        for i in denoms(f):
-            if i.has(n):
-                sol = list(zip(*[solve_linear(i, 0) for i in Mul.make_args(im) if n in i.free_symbols]))
-                if sol != []:
-                    x, xis = sol
-                    if x and all(i == n for i in x):
-                        base_set -= FiniteSet(xis)
+            factors = [factor for factor in Mul.make_args(im) if factor.has(n)]
+            solutions = []
+            linear_only = True
+            for factor in factors:
+                try:
+                    var, sol = solve_linear(factor, 0)
+                except (ValueError, NotImplementedError):
+                    var = sol = None
+                if var == n:
+                    solutions.append(sol)
                 else:
-                    base_set -= ConditionSet(n, Eq(i, 0), S.Integers)
-        return imageset(lam, base_set)
+                    linear_only = False
+                    break
+            if linear_only and solutions:
+                restricted_base = restricted_base.intersect(FiniteSet(*solutions))
+            else:
+                restricted_base = restricted_base.intersect(
+                    ConditionSet(n, Eq(im, 0), base_set))
+
+        for denom in denoms(f):
+            if not denom.has(n):
+                continue
+            denom_factors = [factor for factor in Mul.make_args(denom) if factor.has(n)]
+            if not denom_factors:
+                continue
+            denom_solutions = []
+            denom_linear_only = True
+            for factor in denom_factors:
+                try:
+                    var, sol = solve_linear(factor, 0)
+                except (ValueError, NotImplementedError):
+                    var = sol = None
+                if var == n:
+                    denom_solutions.append(sol)
+                else:
+                    denom_linear_only = False
+                    break
+            if denom_linear_only and denom_solutions:
+                restricted_base = restricted_base - FiniteSet(*denom_solutions)
+            else:
+                restricted_base = restricted_base - ConditionSet(n, Eq(denom, 0), base_set)
+
+        return imageset(lam, restricted_base)
 
     elif isinstance(other, Interval):
         from sympy.solvers.solveset import (invert_real, invert_complex,

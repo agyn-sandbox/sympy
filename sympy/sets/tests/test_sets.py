@@ -53,6 +53,24 @@ def test_imageset():
         Interval(1, 2), Interval(2, 3)))
 
 
+def test_imageset_intersect_reals():
+    n = symbols('n', integer=True)
+
+    s1 = imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers)
+    assert s1.intersect(S.Reals) == FiniteSet(-1, 1)
+    assert (2 in s1.intersect(S.Reals)) is False
+
+    assert imageset(Lambda(n, n), S.Integers).intersect(S.Reals) == S.Integers
+
+    s2 = imageset(Lambda(n, n + I/(n - 1)), S.Integers)
+    assert s2.intersect(S.Reals) is S.EmptySet
+
+    s3 = imageset(Lambda(n, n + (n - 2)*(n - 3)*I), S.Integers)
+    assert s3.intersect(S.Reals) == FiniteSet(2, 3)
+
+    assert imageset(Lambda(n, 1/n), S.Integers).is_subset(S.Reals) is None
+
+
 def test_is_empty():
     for s in [S.Naturals, S.Naturals0, S.Integers, S.Rationals, S.Reals,
             S.UniversalSet]:
