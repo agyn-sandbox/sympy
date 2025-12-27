@@ -106,6 +106,15 @@ def test_identity():
         assert represent(IdentityOperator(n)) == eye(n)
 
 
+def test_dagger_identity_multiplication():
+    A = Operator('A')
+    I = IdentityOperator()
+    B = Dagger(A)
+
+    assert B * I == B
+    assert I * B == B
+
+
 def test_outer_product():
     k = Ket('k')
     b = Bra('b')

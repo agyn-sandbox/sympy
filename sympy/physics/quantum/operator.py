@@ -306,9 +306,15 @@ class IdentityOperator(Operator):
         return r'{\mathcal{I}}'
 
     def __mul__(self, other):
+        from sympy.physics.quantum.dagger import Dagger
 
         if isinstance(other, Operator):
             return other
+
+        if isinstance(other, Dagger):
+            base = other.args[0]
+            if isinstance(base, Operator):
+                return other
 
         return Mul(self, other)
 
