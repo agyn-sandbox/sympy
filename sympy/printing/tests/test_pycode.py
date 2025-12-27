@@ -6,7 +6,9 @@ from sympy.codegen.matrix_nodes import MatrixSolve
 from sympy.core import Expr, Mod, symbols, Eq, Le, Gt, zoo, oo, Rational, Pow
 from sympy.core.numbers import pi
 from sympy.core.singleton import S
-from sympy.functions import acos, KroneckerDelta, Piecewise, sign, sqrt
+from sympy.functions import (
+    Max, Min, acos, KroneckerDelta, Piecewise, sign, sqrt
+)
 from sympy.logic import And, Or
 from sympy.matrices import SparseMatrix, MatrixSymbol, Identity
 from sympy.printing.pycode import (
@@ -173,6 +175,17 @@ def test_pycode_reserved_words():
     raises(ValueError, lambda: pycode(s1 + s2, error_on_reserved=True))
     py_str = pycode(s1 + s2)
     assert py_str in ('else_ + if_', 'if_ + else_')
+
+
+def test_pycode_min_max():
+    a, b, c = symbols('a b c')
+
+    assert pycode(Min(a, b)) == 'min(a, b)'
+    assert pycode(Max(a, b)) == 'max(a, b)'
+    assert pycode(Min(a, b, c)) == 'min(a, b, c)'
+    assert pycode(Max(a, b, c)) == 'max(a, b, c)'
+    assert pycode(Min(a, Max(b, c))) == 'min(a, max(b, c))'
+    assert pycode(Max(a + 1, Min(b, c))) == 'max(a + 1, min(b, c))'
 
 
 def test_issue_20762():
