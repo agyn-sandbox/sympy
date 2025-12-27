@@ -3,7 +3,7 @@ from sympy.matrices.expressions.blockmatrix import (
     BlockMatrix, bc_dist, bc_matadd, bc_transpose, bc_inverse,
     blockcut, reblock_2x2, deblock)
 from sympy.matrices.expressions import (MatrixSymbol, Identity,
-        Inverse, trace, Transpose, det)
+        Inverse, trace, Transpose, det, ZeroMatrix)
 from sympy.matrices import (
     Matrix, ImmutableMatrix, ImmutableSparseMatrix)
 from sympy.core import Tuple, symbols, Expr
@@ -146,6 +146,67 @@ def test_squareBlockMatrix():
 
     Z = BlockMatrix([[Identity(n), B], [C, D]])
     assert not Z.is_Identity
+
+
+def test_blockmul_preserves_zero_blocks_square():
+    a = MatrixSymbol('a', 2, 2)
+    z = ZeroMatrix(2, 2)
+    b = BlockMatrix([[a, z], [z, z]])
+
+    bb = b._blockmul(b)
+    assert bb.blocks[0, 0] == a**2
+    off_01 = bb.blocks[0, 1]
+    assert off_01.is_ZeroMatrix
+    assert off_01.shape == (2, 2)
+    off_10 = bb.blocks[1, 0]
+    assert off_10.is_ZeroMatrix
+    assert off_10.shape == (2, 2)
+    diag_11 = bb.blocks[1, 1]
+    assert diag_11.is_ZeroMatrix
+    assert diag_11.shape == (2, 2)
+
+    collapsed = block_collapse(b*b)
+    assert collapsed.blocks[0, 0] == a**2
+    assert collapsed.blocks[0, 1].is_ZeroMatrix
+    assert collapsed.blocks[0, 1].shape == (2, 2)
+    assert collapsed.blocks[1, 0].is_ZeroMatrix
+    assert collapsed.blocks[1, 0].shape == (2, 2)
+
+    triple = block_collapse(b*b*b)
+    assert triple.blocks[0, 0] == a**3
+    assert triple.blocks[0, 1].is_ZeroMatrix
+    assert triple.blocks[0, 1].shape == (2, 2)
+    assert triple.blocks[1, 0].is_ZeroMatrix
+    assert triple.blocks[1, 0].shape == (2, 2)
+    assert triple.blocks[1, 1].is_ZeroMatrix
+    assert triple.blocks[1, 1].shape == (2, 2)
+
+
+def test_blockmul_preserves_zero_blocks_rectangular():
+    x = MatrixSymbol('x', 2, 4)
+    y = MatrixSymbol('y', 4, 6)
+    lhs = BlockMatrix([[ZeroMatrix(2, 3), x],
+                       [ZeroMatrix(5, 3), ZeroMatrix(5, 4)]])
+    rhs = BlockMatrix([[ZeroMatrix(3, 6), ZeroMatrix(3, 1)],
+                       [y, ZeroMatrix(4, 1)]])
+
+    product = lhs._blockmul(rhs)
+    assert product.blocks[0, 0] == x*y
+    assert product.blocks[0, 1].is_ZeroMatrix
+    assert product.blocks[0, 1].shape == (2, 1)
+    assert product.blocks[1, 0].is_ZeroMatrix
+    assert product.blocks[1, 0].shape == (5, 6)
+    assert product.blocks[1, 1].is_ZeroMatrix
+    assert product.blocks[1, 1].shape == (5, 1)
+
+    collapsed = block_collapse(lhs*rhs)
+    assert collapsed.blocks[0, 0] == x*y
+    assert collapsed.blocks[0, 1].is_ZeroMatrix
+    assert collapsed.blocks[0, 1].shape == (2, 1)
+    assert collapsed.blocks[1, 0].is_ZeroMatrix
+    assert collapsed.blocks[1, 0].shape == (5, 6)
+    assert collapsed.blocks[1, 1].is_ZeroMatrix
+    assert collapsed.blocks[1, 1].shape == (5, 1)
 
 
 def test_BlockDiagMatrix():

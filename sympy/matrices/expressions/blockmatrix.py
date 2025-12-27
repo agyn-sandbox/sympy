@@ -1,6 +1,6 @@
 from __future__ import print_function, division
 
-from sympy import ask, Q
+from sympy import ask, Q, S
 from sympy.core import Basic, Add
 from sympy.core.compatibility import range
 from sympy.strategies import typed, exhaust, condition, do_one, unpack
@@ -164,7 +164,24 @@ class BlockMatrix(MatrixExpr):
     def _blockmul(self, other):
         if (isinstance(other, BlockMatrix) and
                 self.colblocksizes == other.rowblocksizes):
-            return BlockMatrix(self.blocks*other.blocks)
+            row_block_count, shared_block_count = self.blockshape
+            col_block_count = other.blockshape[1]
+            row_sizes = self.rowblocksizes
+            col_sizes = other.colblocksizes
+            result_blocks = []
+            for i in range(row_block_count):
+                for j in range(col_block_count):
+                    terms = [self.blocks[i, k] * other.blocks[k, j]
+                             for k in range(shared_block_count)]
+                    if not terms:
+                        block = ZeroMatrix(row_sizes[i], col_sizes[j])
+                    else:
+                        block = Add(*terms)
+                        if block is S.Zero:
+                            block = ZeroMatrix(row_sizes[i], col_sizes[j])
+                    result_blocks.append(block)
+            result_matrix = Matrix(row_block_count, col_block_count, result_blocks)
+            return BlockMatrix(result_matrix)
 
         return self * other
 
