@@ -296,7 +296,7 @@ class StrPrinter(Printer):
                 # must be parenthesized to preserve the intended structure.
                 # See issue sympy__sympy-21612 where expressions like a/(1/b)
                 # were being printed as a/1/b.
-                if '/' in d:
+                if '/' in d and not (d.startswith('(') and d.endswith(')')):
                     return '%s/(%s)' % (n, d)
                 return '%s/%s' % (n, d)
             return n
@@ -367,7 +367,7 @@ class StrPrinter(Printer):
             # If the single denominator renders with a division (e.g. '1/b'),
             # wrap it in parentheses to preserve the intended grouping.
             denom = b_str[0]
-            if '/' in denom:
+            if '/' in denom and not (denom.startswith('(') and denom.endswith(')')):
                 return sign + '*'.join(a_str) + "/(" + denom + ")"
             return sign + '*'.join(a_str) + "/" + denom
         else:
