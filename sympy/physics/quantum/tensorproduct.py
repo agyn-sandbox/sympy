@@ -383,7 +383,7 @@ def tensor_product_simp(e, **hints):
     commutators and anticommutators as well:
 
     >>> tensor_product_simp(e**2)
-    (A*C)x(B*D)**2
+    (A*C)**2x(B*D)**2
 
     """
     if isinstance(e, Add):
