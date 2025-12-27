@@ -79,3 +79,11 @@ def test_hermite_normal():
     m = Matrix([[2, 7], [0, 0], [0, 0]])
     hnf = Matrix(3, 0, [])
     assert hermite_normal_form(m) == hnf
+
+    rect_rows = [[5, 8, 12], [0, 0, 1]]
+    flipped = [list(reversed(row)) for row in reversed(rect_rows)]
+    rect_m = Matrix(flipped).T
+    H = hermite_normal_form(rect_m)
+    assert H.shape == (3, 2)
+    row_hnf = Matrix([list(reversed(row)) for row in reversed(H.T.tolist())])
+    assert row_hnf == Matrix([[5, 8, 0], [0, 0, 1]])

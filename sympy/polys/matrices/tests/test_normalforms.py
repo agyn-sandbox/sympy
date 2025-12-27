@@ -1,12 +1,18 @@
 from sympy.testing.pytest import raises
 
 from sympy.core.symbol import Symbol
+from sympy.matrices import Matrix
 from sympy.polys.matrices.normalforms import (
     invariant_factors, smith_normal_form,
     hermite_normal_form, _hermite_normal_form, _hermite_normal_form_modulo_D)
 from sympy.polys.domains import ZZ, QQ
 from sympy.polys.matrices import DomainMatrix, DM
 from sympy.polys.matrices.exceptions import DMDomainError, DMShapeError
+
+
+def _column_data_from_row_style(rows):
+    flipped = [list(reversed(row)) for row in reversed(rows)]
+    return [list(col) for col in zip(*flipped)]
 
 
 def test_smith_normal():
@@ -64,6 +70,7 @@ def test_hermite_normal():
     m = DM([[2, 7], [0, 0], [0, 0]], ZZ)
     hnf = DM([[], [], []], ZZ)
     assert hermite_normal_form(m) == hnf
+    assert _hermite_normal_form(m) == hnf
 
     m = DM([[-2, 1], [0, 1]], ZZ)
     hnf = DM([[2, 1], [0, 1]], ZZ)
@@ -73,3 +80,40 @@ def test_hermite_normal():
     raises(DMDomainError, lambda: hermite_normal_form(m))
     raises(DMDomainError, lambda: _hermite_normal_form(m))
     raises(DMDomainError, lambda: _hermite_normal_form_modulo_D(m, ZZ(1)))
+
+
+def test__hermite_normal_form_rectangular_scan_rows():
+    data = _column_data_from_row_style([[5, 8, 12], [0, 0, 1]])
+    m = DM(data, ZZ)
+    h = hermite_normal_form(m)
+    expected = DM([[1, 0], [0, 8], [0, 5]], ZZ)
+    assert h.shape == (3, 2)
+    assert h == expected
+    ht = h.to_Matrix().T
+    row_h = Matrix([list(reversed(row)) for row in reversed(ht.tolist())])
+    assert row_h == Matrix([[5, 8, 0], [0, 0, 1]])
+    assert _hermite_normal_form(m) == expected
+
+
+def test__hermite_normal_form_unit_positions():
+    cases = [
+        ([[5, 8, 12], [0, 1, 0]], DM([[0, 12], [1, 0], [0, 5]], ZZ), Matrix([[5, 0, 12], [0, 1, 0]])),
+        ([[5, 8, 12], [1, 0, 0]], DM([[12, 0], [8, 0], [0, 1]], ZZ), Matrix([[1, 0, 0], [0, 8, 12]])),
+    ]
+    for rows, expected_dm, expected_row in cases:
+        m = DM(_column_data_from_row_style(rows), ZZ)
+        h = hermite_normal_form(m)
+        assert h == expected_dm
+        assert _hermite_normal_form(m) == expected_dm
+        ht = h.to_Matrix().T
+        row_h = Matrix([list(reversed(row)) for row in reversed(ht.tolist())])
+        assert row_h == expected_row
+
+
+def test__hermite_normal_form_top_pivots():
+    m = DM([[0, 5], [1, 0], [0, 0], [0, 0]], ZZ)
+    expected = DM([[5, 0], [0, 1], [0, 0], [0, 0]], ZZ)
+    h = hermite_normal_form(m)
+    assert h.shape == (4, 2)
+    assert h == expected
+    assert _hermite_normal_form(m) == expected
