@@ -1,5 +1,6 @@
-from sympy import symbols, pi, sin, cos, ImmutableMatrix as Matrix
-from sympy.physics.vector import ReferenceFrame, Vector, dynamicsymbols, dot
+from sympy import S, symbols, pi, sin, cos, ImmutableMatrix as Matrix
+from sympy.physics.vector import (ReferenceFrame, Vector, dynamicsymbols,
+    dot, outer)
 from sympy.abc import x, y, z
 from sympy.utilities.pytest import raises
 
@@ -57,6 +58,22 @@ def test_Vector():
     #Test the free_symbols property
     v6 = x*A.x + y*A.y + z*A.z
     assert v6.free_symbols(A) == {x,y,z}
+
+
+def test_vector_add_zero_no_op():
+    N = ReferenceFrame('N')
+    v = N.x
+
+    assert (v + 0) is v
+    assert (0 + v) is v
+    assert (v + S.Zero) is v
+    assert (S.Zero + v) is v
+
+    assert sum([v, 0 * v]) == v
+    assert sum([v]) == v
+    assert sum([], start=v) is v
+
+    raises(TypeError, lambda: v + outer(N.x, N.x) * 0)
 
 
 def test_Vector_diffs():
