@@ -155,7 +155,8 @@ def test_difference():
         Union(Interval(0, 1, False, True), Interval(1, 2, True, False))
 
     assert FiniteSet(1, 2, 3) - FiniteSet(2) == FiniteSet(1, 3)
-    assert FiniteSet('ham', 'eggs') - FiniteSet('eggs') == FiniteSet('ham')
+    assert FiniteSet('ham', 'eggs') - FiniteSet('eggs') == \
+        Complement(FiniteSet('ham'), FiniteSet('eggs'), evaluate=False)
     assert FiniteSet(1, 2, 3, 4) - Interval(2, 10, True, False) == \
         FiniteSet(1, 2)
     assert FiniteSet(1, 2, 3, 4) - S.EmptySet == FiniteSet(1, 2, 3, 4)
@@ -175,6 +176,20 @@ def test_Complement():
     assert not 3 in Complement(Interval(0, 5), Interval(1, 4), evaluate=False)
     assert -1 in Complement(S.Reals, S.Naturals, evaluate=False)
     assert not 1 in Complement(S.Reals, S.Naturals, evaluate=False)
+
+    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \
+        Complement(FiniteSet(x, y), Interval(-10, 10), evaluate=False)
+
+    a = Symbol('a')
+    b = Symbol('b')
+    c = Symbol('c')
+    assert Complement(FiniteSet(a, b), FiniteSet(a, c)) == \
+        Complement(FiniteSet(b), FiniteSet(a, c), evaluate=False)
+
+    assert Complement(FiniteSet(x, 20), Interval(-10, 10)) == \
+        Union(FiniteSet(20),
+              Complement(FiniteSet(x), Interval(-10, 10), evaluate=False),
+              evaluate=False)
 
     assert Complement(S.Integers, S.UniversalSet) == EmptySet()
     assert S.UniversalSet.complement(S.Integers) == EmptySet()
@@ -936,7 +951,7 @@ def test_issue_9637():
 def test_issue_9808():
     assert Complement(FiniteSet(y), FiniteSet(1)) == Complement(FiniteSet(y), FiniteSet(1), evaluate=False)
     assert Complement(FiniteSet(1, 2, x), FiniteSet(x, y, 2, 3)) == \
-        Complement(FiniteSet(1), FiniteSet(y), evaluate=False)
+        Complement(FiniteSet(1), FiniteSet(x, y, 2, 3), evaluate=False)
 
 
 def test_issue_9956():
@@ -953,7 +968,9 @@ def test_issue_Symbol_inter():
     assert Intersection(FiniteSet(1, m, n), FiniteSet(m, n, 2), i) == \
         Intersection(i, FiniteSet(m, n))
     assert Intersection(FiniteSet(m, n, x), FiniteSet(m, z), r) == \
-        Intersection(r, FiniteSet(m, z), FiniteSet(n, x))
+        Intersection(FiniteSet(m, z),
+                    Complement(Intersection(r, FiniteSet(n, x)), FiniteSet(m), evaluate=False),
+                    evaluate=False)
     assert Intersection(FiniteSet(m, n, 3), FiniteSet(m, n, x), r) == \
         Intersection(r, FiniteSet(3, m, n), evaluate=False)
     assert Intersection(FiniteSet(m, n, 3), FiniteSet(m, n, 2, 3), r) == \

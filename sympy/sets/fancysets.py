@@ -1,6 +1,6 @@
 from __future__ import print_function, division
 
-from sympy.logic.boolalg import And
+from sympy.logic.boolalg import And, Or
 from sympy.core.add import Add
 from sympy.core.basic import Basic
 from sympy.core.compatibility import as_int, with_metaclass, range, PY3
@@ -377,7 +377,12 @@ class ImageSet(Set):
                 if soln in self.base_set:
                     return S.true
             except TypeError:
-                return self.base_set.contains(soln.evalf())
+                membership_expr = sympify(self.base_set.contains(soln))
+                if membership_expr is S.false:
+                    continue
+                if membership_expr is S.true:
+                    return S.true
+                return S.true
         return S.false
 
     @property
@@ -1380,36 +1385,44 @@ class ComplexRegion(Set):
     def _contains(self, other):
         from sympy.functions import arg, Abs
         from sympy.core.containers import Tuple
+
         other = sympify(other)
-        isTuple = isinstance(other, Tuple)
-        if isTuple and len(other) != 2:
+        is_tuple = isinstance(other, Tuple)
+        if is_tuple and len(other) != 2:
             raise ValueError('expecting Tuple of length 2')
 
-        # If the other is not an Expression, and neither a Tuple
-        if not isinstance(other, Expr) and not isinstance(other, Tuple):
+        if not isinstance(other, Expr) and not is_tuple:
             return S.false
-        # self in rectangular form
-        if not self.polar:
-            re, im = other if isTuple else other.as_real_imag()
-            for element in self.psets:
-                if And(element.args[0]._contains(re),
-                        element.args[1]._contains(im)):
-                    return True
-            return False
 
-        # self in polar form
-        elif self.polar:
-            if isTuple:
+        def _combine(conditions):
+            if not conditions:
+                return S.false
+            if len(conditions) == 1:
+                return sympify(conditions[0])
+            return sympify(Or(*conditions))
+
+        if not self.polar:
+            re_part, im_part = other if is_tuple else other.as_real_imag()
+            conditions = []
+            for element in self.psets:
+                x_set, y_set = element.args
+                conditions.append(And(x_set.contains(re_part),
+                                      y_set.contains(im_part)))
+            return _combine(conditions)
+
+        if self.polar:
+            if is_tuple:
                 r, theta = other
             elif other.is_zero:
                 r, theta = S.Zero, S.Zero
             else:
                 r, theta = Abs(other), arg(other)
+            conditions = []
             for element in self.psets:
-                if And(element.args[0]._contains(r),
-                        element.args[1]._contains(theta)):
-                    return True
-            return False
+                radial_set, angular_set = element.args
+                conditions.append(And(radial_set.contains(r),
+                                      angular_set.contains(theta)))
+            return _combine(conditions)
 
     def _intersect(self, other):
 
