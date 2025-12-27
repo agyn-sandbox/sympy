@@ -1515,6 +1515,22 @@ def test_Mod():
     assert Mod(-5, 3) == 1
     assert Mod(5, -3) == -1
     assert Mod(-5, -3) == -2
+    i = symbols('i', integer=True)
+    e = symbols('e', even=True)
+    m = symbols('m', integer=True, positive=True)
+    assert Mod(3*i, 2) == Mod(i, 2)
+    assert Mod(2*i, 2) == 0
+    assert Mod(-3*i, 2) == Mod(i, 2)
+    assert Mod(9*i, 6) == Mod(3*i, 6)
+    assert Mod(3*x, 2) == Mod(3*x, 2)
+    assert Mod(e/2, 2) == Mod(e/2, 2)
+    assert Mod(6/2, 2) == 1
+    assert Mod((e.subs(e, 6))/2, 2) == Mod(3, 2)
+    assert Mod(2*i + 1, 2) == 1
+    assert Mod(2*i + 3, 2) == 1
+    assert Mod(6*i + 4, 2) == 0
+    assert Mod(3*i, m) == Mod(3*i, m)
+    assert Mod((i + 1)*(i + 2), 2) == Mod((i + 1)*(i + 2), 2)
     assert type(Mod(3.2, 2, evaluate=False)) == Mod
     assert 5 % x == Mod(5, x)
     assert x % 5 == Mod(x, 5)

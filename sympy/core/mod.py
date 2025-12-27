@@ -1,6 +1,6 @@
 from __future__ import print_function, division
 
-from sympy.core.numbers import nan
+from sympy.core.numbers import Integer, nan
 from .function import Function
 
 
@@ -91,6 +91,63 @@ class Mod(Function):
         rv = doit(p, q)
         if rv is not None:
             return rv
+
+        if q.is_Integer and q > 0:
+            # Only normalize integer arguments when the modulus is a positive
+            # Integer. Do not attempt to distribute through division or handle
+            # symbolic moduli here; those cases fall back to the general logic
+            # below.
+            if p.is_Mul:
+                coeff, rest = p.as_coeff_Mul()
+                if coeff and coeff.is_integer and rest.is_integer is True:
+                    coeff_mod = Integer(coeff % q)
+                    if coeff_mod == 0:
+                        return S.Zero
+                    if coeff_mod != coeff:
+                        if coeff_mod == 1:
+                            return cls(rest, q)
+                        return cls(coeff_mod*rest, q)
+            elif p.is_Add:
+                terms = []
+                const_total = S.Zero
+                have_constant = False
+                changed = False
+                for term in p.args:
+                    if term.is_Integer:
+                        const_total += term
+                        have_constant = True
+                        continue
+                    coeff, rest = term.as_coeff_Mul()
+                    if coeff.is_integer and rest.is_integer is True:
+                        coeff_mod = Integer(coeff % q)
+                        if coeff_mod == 0:
+                            changed = True
+                            continue
+                        term_candidate = coeff_mod*rest
+                        if term_candidate != term:
+                            changed = True
+                        if term_candidate.is_Integer:
+                            const_total += term_candidate
+                            have_constant = True
+                        else:
+                            terms.append(term_candidate)
+                        continue
+                    terms.append(term)
+
+                if have_constant:
+                    const_mod = Integer(const_total % q)
+                    if const_mod != const_total:
+                        changed = True
+                    if const_mod:
+                        terms.append(const_mod)
+                    elif const_total != S.Zero:
+                        changed = True
+
+                if changed:
+                    if not terms:
+                        return S.Zero
+                    new_arg = Add(*terms)
+                    return cls(new_arg, q)
 
         # denest
         if isinstance(p, cls):
