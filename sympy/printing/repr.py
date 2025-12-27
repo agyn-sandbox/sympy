@@ -144,6 +144,22 @@ class ReprPrinter(Printer):
     def _print_list(self, expr):
         return "[%s]" % self.reprify(expr, ", ")
 
+    def _print_set(self, expr):
+        """Print Python built-in set with srepr of elements.
+
+        Empty set must be represented as ``set()`` (``{}`` is an empty dict).
+        """
+        if len(expr) == 0:
+            return 'set()'
+        return "{" + self.reprify(expr, ", ") + "}"
+
+    def _print_dict(self, expr):
+        """Print Python built-in dict with srepr of keys and values."""
+        items = []
+        for k, v in expr.items():
+            items.append(f"{self._print(k)}: {self._print(v)}")
+        return "{" + ", ".join(items) + "}"
+
     def _print_MatrixBase(self, expr):
         # special case for some empty matrices
         if (expr.rows == 0) ^ (expr.cols == 0):
