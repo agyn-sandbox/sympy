@@ -247,7 +247,8 @@ def test_encode_morse():
     assert encode_morse(' ', sep='`') == '``'
     assert encode_morse(' ', sep='``') == '````'
     assert encode_morse('!@#$%^&*()_+') == '-.-.--|.--.-.|...-..-|-.--.|-.--.-|..--.-|.-.-.'
-
+    # digits
+    assert encode_morse('1') == '.----'
 
 def test_decode_morse():
     assert decode_morse('-.-|.|-.--') == 'KEY'
