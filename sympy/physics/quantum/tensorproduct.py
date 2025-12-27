@@ -268,6 +268,13 @@ class TensorProduct(Expr):
                          for idx, value in enumerate(exp.args)])
 
 
+def tensor_product_simp_Pow(e, **hints):
+    base_simpl = tensor_product_simp(e.base, **hints)
+    if isinstance(base_simpl, TensorProduct):
+        return TensorProduct(*[arg**e.exp for arg in base_simpl.args])
+    return base_simpl ** e.exp
+
+
 def tensor_product_simp_Mul(e):
     """Simplify a Mul with TensorProducts.
 
@@ -382,7 +389,7 @@ def tensor_product_simp(e, **hints):
     if isinstance(e, Add):
         return Add(*[tensor_product_simp(arg) for arg in e.args])
     elif isinstance(e, Pow):
-        return tensor_product_simp(e.base) ** e.exp
+        return tensor_product_simp_Pow(e, **hints)
     elif isinstance(e, Mul):
         return tensor_product_simp_Mul(e)
     elif isinstance(e, Commutator):
