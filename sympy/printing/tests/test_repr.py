@@ -318,3 +318,25 @@ def test_diffgeom():
     assert srepr(rect) == "CoordSystem('rect', Patch('P', Manifold('M', 2)), ('rect_0', 'rect_1'))"
     b = BaseScalarField(rect, 0)
     assert srepr(b) == "BaseScalarField(CoordSystem('rect', Patch('P', Manifold('M', 2)), ('rect_0', 'rect_1')), Integer(0))"
+
+def test_set_and_dict():
+    # set: order can vary; accept either
+    s1 = "{Symbol('x'), Symbol('y')}"
+    s2 = "{Symbol('y'), Symbol('x')}"
+    assert srepr({x, y}) in (s1, s2)
+    assert eval(srepr({x, y}), ENV) == {x, y}
+
+    # empty set must not be printed as {}
+    assert srepr(set()) == "set()"
+    assert eval(srepr(set()), ENV) == set()
+
+    # dict: single item deterministic
+    assert srepr({x: y}) == "{Symbol('x'): Symbol('y')}"
+    assert eval(srepr({x: y}), ENV) == {x: y}
+
+    # dict with two items: order of items is insertion-ordered in py>=3.7
+    d = {x: y, y: x}
+    sA = "{Symbol('x'): Symbol('y'), Symbol('y'): Symbol('x')}"
+    sB = "{Symbol('y'): Symbol('x'), Symbol('x'): Symbol('y')}"
+    assert srepr(d) in (sA, sB)
+    assert eval(srepr(d), ENV) == d
