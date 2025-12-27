@@ -1,5 +1,5 @@
 from sympy import (Eq, Matrix, pi, sin, sqrt, Symbol, Integral, Piecewise,
-    symbols, Float, I)
+    symbols, Float, I, Rational)
 from mpmath import mnorm, mpf
 from sympy.solvers import nsolve
 from sympy.utilities.lambdify import lambdify
@@ -99,6 +99,14 @@ def test_nsolve_precision():
     assert abs(sqrt(pi).evalf(128) - sols[0]) < 1e-128
     assert abs(sqrt(sqrt(pi)).evalf(128) - sols[1]) < 1e-128
     assert all(isinstance(i, Float) for i in sols)
+
+
+def test_nsolve_rational_precision():
+    x = Symbol('x')
+    target = Rational(1, 3)
+    sol = nsolve(x - target, 0.3, prec=80)
+    error = abs(sol - target).evalf(85)
+    assert error < Float('1e-80', 270)
 
 def test_nsolve_complex():
     x, y = symbols('x y')

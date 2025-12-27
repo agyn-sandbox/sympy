@@ -157,6 +157,14 @@ def test_mpmath_precision():
     mpmath.mp.dps = 100
     assert str(lambdify((), pi.evalf(100), 'mpmath')()) == str(pi.evalf(100))
 
+
+def test_mpmath_rational_source_precision():
+    f = lambdify(x, Rational(232, 3), modules='mpmath')
+    source = inspect.getsource(f)
+    assert 'mpf(' in source
+    assert '232/3' not in source
+    assert f.__globals__['mpf'] is mpmath.mpf
+
 #================== Test Translations ==============================
 # We can only check if all translated functions are valid. It has to be checked
 # by hand if they are complete.
