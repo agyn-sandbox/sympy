@@ -8,7 +8,6 @@ from sympy import (
     symbols, lambdify, sqrt, sin, cos, tan, pi, acos, acosh, Rational,
     Float, Lambda, Piecewise, exp, E, Integral, oo, I, Abs, Function,
     true, false, And, Or, Not, ITE, Min, Max, floor, diff, IndexedBase, Sum,
-    DotProduct, Eq, Dummy, sinc, erf, erfc, factorial, gamma, loggamma,
     DotProduct, Eq, Dummy, Mod, sinc, erf, erfc, factorial, gamma, loggamma,
     digamma, RisingFactorial, besselj, bessely, besseli, besselk, S, beta,
     betainc, betainc_regularized, fresnelc, fresnels)

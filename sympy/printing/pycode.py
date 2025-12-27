@@ -468,11 +468,9 @@ class PythonCodePrinter(AbstractPythonCodePrinter):
         if not a:
             a = [S.One]
 
+        from sympy.core.mod import Mod
         def _paren_factor(f, level):
-            try:
-                is_mod = (f.func.__name__ == "Mod")
-            except Exception:
-                is_mod = False
+            is_mod = isinstance(f, Mod)
             par_level = self._PREC.MUL if is_mod else level
             txt = self.parenthesize(f, par_level)
             if is_mod and not (txt.startswith("(") and txt.endswith(")")):
