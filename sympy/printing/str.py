@@ -292,6 +292,12 @@ class StrPrinter(Printer):
             if len(dfactors) > 1:
                 return '%s/(%s)' % (n, d)
             elif dfactors:
+                # If the (single) denominator itself contains a division, it
+                # must be parenthesized to preserve the intended structure.
+                # See issue sympy__sympy-21612 where expressions like a/(1/b)
+                # were being printed as a/1/b.
+                if '/' in d:
+                    return '%s/(%s)' % (n, d)
                 return '%s/%s' % (n, d)
             return n
 
