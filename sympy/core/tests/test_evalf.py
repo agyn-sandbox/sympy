@@ -511,3 +511,14 @@ def test_issue_10395():
     eq = x*Max(y, -1.1)
     assert nfloat(eq) == eq
     assert Max(y, 4).n() == Max(4.0, y)
+
+
+def test_evalf_mul_with_Max_ordering_regression():
+    from sympy import symbols, Mul, Max
+
+    x, y = symbols('x y')
+    e1 = Mul(x, Max(0, y), evaluate=False)
+    e2 = Mul(Max(0, y), x, evaluate=False)
+
+    assert e1.evalf() == e1
+    assert e2.evalf() == e2

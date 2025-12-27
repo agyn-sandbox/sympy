@@ -1301,12 +1301,16 @@ def evalf(x, prec, options):
             elif re.is_number:
                 re = re._to_mpmath(prec, allow_ints=False)._mpf_
                 reprec = prec
+            else:
+                raise NotImplementedError
             if im == 0:
                 im = None
                 imprec = None
             elif im.is_number:
                 im = im._to_mpmath(prec, allow_ints=False)._mpf_
                 imprec = prec
+            else:
+                raise NotImplementedError
             r = re, im, reprec, imprec
         except AttributeError:
             raise NotImplementedError
@@ -1403,8 +1407,8 @@ class EvalfMixin(object):
                 # If the result is numerical, normalize it
                 result = evalf(v, prec, options)
             except NotImplementedError:
-                # Probably contains symbols or unknown functions
-                return v
+                # Probably contains symbols or unknown functions; keep original
+                return self
         re, im, re_acc, im_acc = result
         if re:
             p = max(min(prec, re_acc), 1)
