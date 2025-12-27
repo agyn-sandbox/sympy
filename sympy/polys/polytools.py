@@ -6203,19 +6203,79 @@ def _torational_factor_list(p, x):
 @public
 def sqf_list(f, *gens, **args):
     """
-    Compute a list of square-free factors of ``f``.
+    Compute a list of square-free factors of ``f`` treated as a univariate
+    polynomial.
+
+    Factors that share the same multiplicity are aggregated into a single
+    factor.  Set ``polys=True`` to return the aggregated factors as
+    :class:`~.Poly` instances instead of expressions.
 
     Examples
     ========
 
-    >>> from sympy import sqf_list
-    >>> from sympy.abc import x
+    >>> from sympy import Poly, sqf_list
+    >>> from sympy.abc import x, y
 
     >>> sqf_list(2*x**5 + 16*x**4 + 50*x**3 + 76*x**2 + 56*x + 16)
     (2, [(x + 1, 2), (x + 2, 3)])
 
+    >>> sqf_list((x**2 + 1)*(x - 1)**2*(x - 2)**3*(x - 3)**3)
+    (1, [(x**2 + 1, 1), (x - 1, 2), (x**2 - 5*x + 6, 3)])
+
+    >>> sqf_list((x**2 + 1)*(x - 1)**2*(x - 2)**3*(x - 3)**3, polys=True)
+    (1, [(Poly(x**2 + 1, x), 1), (Poly(x - 1, x), 2), (Poly(x**2 - 5*x + 6, x), 3)])
+
+    >>> sqf_list(x*(x + y))
+    Traceback (most recent call last):
+    ...
+    ValueError: sqf_list expects a univariate polynomial; got multivariate input
+
+    >>> sqf_list(1)
+    Traceback (most recent call last):
+    ...
+    ValueError: sqf_list expects a univariate polynomial of degree >= 1; got constant
+
     """
-    return _generic_factor_list(f, gens, args, method='sqf')
+    options.allowed_flags(args, ['polys'])
+
+    try:
+        poly, opt = poly_from_expr(f, *gens, **args)
+    except PolificationFailed as exc:
+        raise PolynomialError("a polynomial expected, got %s" % exc.expr)
+
+    multivariate_msg = "sqf_list expects a univariate polynomial; got multivariate input"
+
+    if opt.gens and len(opt.gens) != 1:
+        raise ValueError(multivariate_msg)
+
+    if len(poly.gens) != 1:
+        raise ValueError(multivariate_msg)
+
+    if poly.degree() <= 0:
+        raise ValueError(
+            "sqf_list expects a univariate polynomial of degree >= 1; got constant"
+        )
+
+    coeff, factors = poly.sqf_list()
+
+    grouped = {}
+    want_polys = bool(opt.polys)
+    for factor, multiplicity in factors:
+        current = grouped.get(multiplicity)
+        if current is None:
+            grouped[multiplicity] = factor
+        else:
+            grouped[multiplicity] = current * factor
+
+    aggregated = []
+    for multiplicity in sorted(grouped):
+        factor = grouped[multiplicity]
+        if want_polys:
+            aggregated.append((factor, multiplicity))
+        else:
+            aggregated.append((factor.as_expr(), multiplicity))
+
+    return coeff, aggregated
 
 
 @public
