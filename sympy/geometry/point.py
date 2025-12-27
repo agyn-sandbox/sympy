@@ -104,7 +104,8 @@ class Point(GeometryEntity):
     """
 
     is_Point = True
-    _op_priority = 11.0
+    # Higher than MatrixExpr._op_priority (11.0) so scalar*Point dispatches here
+    _op_priority = 13.0
 
     def __new__(cls, *args, **kwargs):
         evaluate = kwargs.get('evaluate', global_evaluate[0])

@@ -1,4 +1,4 @@
-from sympy import I, Rational, Symbol, pi, sqrt, S, sympify
+from sympy import I, Rational, Symbol, pi, sqrt, S, sympify, MatrixSymbol
 from sympy.geometry import Line, Point, Point2D, Point3D, Line3D, Plane
 from sympy.geometry.entity import rotate, scale, translate
 from sympy.matrices import Matrix
@@ -151,6 +151,10 @@ def test_point_scalar_multiplication_commutative():
     identity_matrix = Matrix([[1, 0], [0, 1]])
     raises(TypeError, lambda: identity_matrix*p)
     raises(TypeError, lambda: p*identity_matrix)
+
+    A = MatrixSymbol('A', 2, 2)
+    raises(TypeError, lambda: A*p)
+    raises(TypeError, lambda: p*A)
 
 def test_point3D():
     x = Symbol('x', real=True)
