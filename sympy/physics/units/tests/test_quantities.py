@@ -13,7 +13,7 @@ from sympy.integrals.integrals import integrate
 from sympy.physics.units import (amount_of_substance, area, convert_to, find_unit,
                                  volume, kilometer, joule, molar_gas_constant,
                                  vacuum_permittivity, elementary_charge, volt,
-                                 ohm)
+                                 ohm, farad)
 from sympy.physics.units.definitions import (amu, au, centimeter, coulomb,
     day, foot, grams, hour, inch, kg, km, m, meter, millimeter,
     minute, quart, s, second, speed_of_light, bit,
@@ -193,6 +193,17 @@ def test_check_unit_consistency():
     raises(ValueError, lambda: check_unit_consistency(u + 1))
     raises(ValueError, lambda: check_unit_consistency(u - 1))
     raises(ValueError, lambda: check_unit_consistency(1 - exp(u / w)))
+
+
+def test_dimensionless_exponent_in_add():
+    expr = second / (ohm * farad)
+    factor, dim = SI._collect_factor_and_dimension(100 + exp(expr))
+    assert SI.get_dimension_system().is_dimensionless(dim)
+
+
+def test_dimension_mismatch_in_add_raises():
+    with raises(ValueError):
+        SI._collect_factor_and_dimension(second + ohm)
 
 
 def test_mul_div():
