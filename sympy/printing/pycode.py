@@ -18,6 +18,8 @@ _kw = {
 
 _known_functions = {
     'Abs': 'abs',
+    'Max': 'max',
+    'Min': 'min',
 }
 _known_functions_math = {
     'acos': 'acos',
