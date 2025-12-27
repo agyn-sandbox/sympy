@@ -178,6 +178,7 @@ def test_residue():
     assert nthroot_mod(17*17, 5, 17, True) == [0]
     assert nthroot_mod(0, 3, 5) == 0
     assert nthroot_mod(0, 3, 5, True) == [0]
+    assert nthroot_mod(0, 0, 5) is None
     raises(ValueError, lambda: nthroot_mod(-17, 3, 17))
     raises(ValueError, lambda: nthroot_mod(0, -1, 5))
     # p == 2

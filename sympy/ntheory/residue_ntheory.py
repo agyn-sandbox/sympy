@@ -776,15 +776,15 @@ def nthroot_mod(a, n, p, all_roots=False):
     if not isprime(p):
         raise NotImplementedError("Not implemented for composite p")
 
+    # see Hackman "Elementary Number Theory" (2009), page 76
+    if not residue_exists:
+        return None
+
     # For prime moduli, handle zero residue early to include 0 as a root
     # and avoid incorrect processing in the multiplicative group of units.
     amod = a % p
     if amod == 0:
         return [0] if all_roots else 0
-
-    # see Hackman "Elementary Number Theory" (2009), page 76
-    if not residue_exists:
-        return None
 
     if (p - 1) % n == 0:
         return _nthroot_mod1(a, n, p, all_roots)
