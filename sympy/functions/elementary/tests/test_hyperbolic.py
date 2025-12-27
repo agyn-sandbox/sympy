@@ -883,6 +883,29 @@ def test_coth_rewrite():
     assert coth(x).rewrite(tanh) == 1/tanh(x)
 
 
+def test_coth_log_tan_integer_subs_branch():
+    x = Symbol('x')
+    expr = coth(log(tan(x)))
+
+    historical = [2, 3, 5, 6, 8, 9, 11, 12, 15, 18]
+    positive_tan = [4, 7, 10, 13, 16]
+
+    for value in historical + positive_tan:
+        evaluated = expr.subs(x, value)
+        assert evaluated.func == coth
+
+
+def test_coth_additive_ipi_handling():
+    z = Symbol('z')
+    m = Symbol('m', integer=True)
+    expr = coth(z + m*pi*I/2)
+
+    assert expr.subs(m, 0) == coth(z)
+
+    for value in [1, -1, 3]:
+        assert expr.subs(m, value) == tanh(z)
+
+
 def test_csch_rewrite():
     x = Symbol('x')
     assert csch(x).rewrite(exp) == 1 / (exp(x)/2 - exp(-x)/2) \
