@@ -172,10 +172,15 @@ class UnitSystem(_QuantityMapper):
             return factor ** exp_factor, dim ** (exp_factor * exp_dim)
         elif isinstance(expr, Add):
             factor, dim = self._collect_factor_and_dimension(expr.args[0])
+            dimsys = self.get_dimension_system()
             for addend in expr.args[1:]:
                 addend_factor, addend_dim = \
                     self._collect_factor_and_dimension(addend)
-                if dim != addend_dim:
+                if dimsys is not None:
+                    dims_equal = dimsys.equivalent_dims(dim, addend_dim)
+                else:
+                    dims_equal = dim == addend_dim
+                if not dims_equal:
                     raise ValueError(
                         'Dimension of "{}" is {}, '
                         'but it should be {}'.format(
