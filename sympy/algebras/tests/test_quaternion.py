@@ -3,6 +3,7 @@ from sympy import symbols, re, im, Add, Mul, I, Abs
 from sympy import cos, sin, sqrt, conjugate, exp, log, acos, E, pi
 from sympy.utilities.pytest import raises
 from sympy import Matrix
+from sympy.matrices import rot_axis1, rot_axis2, rot_axis3
 from sympy import diff, integrate, trigsimp
 from sympy import S, Rational
 
@@ -120,3 +121,45 @@ def test_quaternion_conversions():
                [sin(theta),  cos(theta), 0, -sin(theta) - cos(theta) + 1],
                [0,           0,          1,  0],
                [0,           0,          0,  1]])
+
+
+def test_to_rotation_matrix_axis_signs():
+    def _rx(angle):
+        return Matrix([
+            [1, 0, 0],
+            [0, cos(angle), -sin(angle)],
+            [0, sin(angle), cos(angle)],
+        ])
+
+    def _ry(angle):
+        return Matrix([
+            [cos(angle), 0, sin(angle)],
+            [0, 1, 0],
+            [-sin(angle), 0, cos(angle)],
+        ])
+
+    def _rz(angle):
+        return Matrix([
+            [cos(angle), -sin(angle), 0],
+            [sin(angle), cos(angle), 0],
+            [0, 0, 1],
+        ])
+
+    angles = [0, pi/2, pi]
+    test_data = [
+        ((1, 0, 0), _rx, rot_axis1),
+        ((0, 1, 0), _ry, rot_axis2),
+        ((0, 0, 1), _rz, rot_axis3),
+    ]
+
+    zero = Matrix.zeros(3)
+
+    for axis, expected_matrix, rot_axis in test_data:
+        for angle in angles:
+            quat = Quaternion.from_axis_angle(axis, angle)
+            result = quat.to_rotation_matrix()
+            expected = expected_matrix(angle)
+            diff_expected = trigsimp(result - expected)
+            diff_rot_axis = trigsimp(result - rot_axis(-angle))
+            assert diff_expected == zero
+            assert diff_rot_axis == zero
