@@ -84,8 +84,12 @@ def test_Min():
     assert Min(np, np_).func is Min
     assert Min(p, p_).func is Min
 
+    # zero-arg identity
+    assert Min() == S.Infinity
+    assert Min() == oo
+    assert Min(evaluate=False) == S.Infinity
+
     # lists
-    raises(ValueError, lambda: Min())
     assert Min(x, y) == Min(y, x)
     assert Min(x, y, z) == Min(z, y, x)
     assert Min(x, Min(y, z)) == Min(z, y, x)
@@ -154,9 +158,12 @@ def test_Max():
 
     assert Max(5, 4) == 5
 
-    # lists
+    # zero-arg identity
+    assert Max() == S.NegativeInfinity
+    assert Max() == -oo
+    assert Max(evaluate=False) == S.NegativeInfinity
 
-    raises(ValueError, lambda: Max())
+    # lists
     assert Max(x, y) == Max(y, x)
     assert Max(x, y, z) == Max(z, y, x)
     assert Max(x, Max(y, z)) == Max(z, y, x)
