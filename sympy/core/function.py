@@ -43,7 +43,7 @@ from .numbers import Rational, Float
 from .operations import LatticeOp
 from .rules import Transform
 from .singleton import S
-from .sympify import sympify
+from .sympify import sympify, _sympify
 
 from sympy.core.containers import Tuple, Dict
 from sympy.core.parameters import global_parameters
@@ -111,6 +111,54 @@ class BadSignatureError(TypeError):
 class BadArgumentsError(TypeError):
     '''Raised when a Lambda is called with an incorrect number of arguments'''
     pass
+
+
+def bound_subs(expr, old, new):
+    """Return ``expr`` with ``old`` replaced by ``new`` outside bound scopes.
+
+    Subtrees whose ``bound_symbols`` contain ``old`` are left untouched so that
+    dummy variables keep their lexical scope during substitution.
+    """
+
+    old = _sympify(old)
+    new = _sympify(new)
+
+    if expr == old:
+        return new
+    if old == new:
+        return expr
+
+    def _recurse(node):
+        if node == old:
+            return new
+        if not isinstance(node, Basic):
+            return node
+
+        bound_syms = getattr(node, 'bound_symbols', ())
+        if bound_syms:
+            try:
+                if old in bound_syms:
+                    return node
+            except TypeError:
+                if any(old == sym for sym in bound_syms):
+                    return node
+
+        if not node._args:
+            return node
+
+        new_args = tuple(_recurse(arg) for arg in node._args)
+        if new_args == node._args:
+            return node
+        return node.func(*new_args)
+
+    return _recurse(expr)
+
+
+def _replace_signature_symbol(signature, target, replacement):
+    if isinstance(signature, Tuple):
+        return Tuple(*(_replace_signature_symbol(arg, target, replacement)
+                       for arg in signature))
+    return replacement if signature == target else signature
 
 
 # Python 2/3 version that does not raise a Deprecation warning
@@ -2020,6 +2068,33 @@ class Lambda(Expr):
     @property
     def free_symbols(self):
         return self.expr.free_symbols - set(self.variables)
+
+    def _eval_subs(self, old, new):
+        old = _sympify(old)
+        new = _sympify(new)
+
+        bound = tuple(self.variables)
+        if old in bound:
+            if not isinstance(new, Symbol):
+                return self
+
+            replacement = new
+            if replacement == old:
+                return self
+            other_bound = set(bound) - {old}
+            if replacement in other_bound or replacement in self.expr.free_symbols:
+                replacement = old.as_dummy()
+
+            new_signature = _replace_signature_symbol(self.signature, old, replacement)
+            new_expr = bound_subs(self.expr, old, replacement)
+            if new_signature == self.signature and new_expr == self.expr:
+                return self
+            return self.func(new_signature, new_expr)
+
+        new_expr = bound_subs(self.expr, old, new)
+        if new_expr == self.expr:
+            return self
+        return self.func(self.signature, new_expr)
 
     def __call__(self, *args):
         n = len(args)

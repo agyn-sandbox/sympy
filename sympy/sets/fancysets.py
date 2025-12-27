@@ -5,7 +5,7 @@ from functools import reduce
 from sympy.core.basic import Basic
 from sympy.core.containers import Tuple
 from sympy.core.expr import Expr
-from sympy.core.function import Lambda
+from sympy.core.function import Lambda, bound_subs
 from sympy.core.logic import fuzzy_not, fuzzy_or, fuzzy_and
 from sympy.core.numbers import oo, Integer
 from sympy.core.relational import Eq
@@ -493,6 +493,13 @@ class ImageSet(Set):
         if all(s.is_FiniteSet for s in self.base_sets):
             return FiniteSet(*(f(*a) for a in cartes(*self.base_sets)))
         return self
+
+    def _eval_subs(self, old, new):
+        new_lambda = self.lamda._subs(old, new)
+        new_sets = tuple(bound_subs(s, old, new) for s in self.base_sets)
+        if new_lambda is self.lamda and all(ns is bs for ns, bs in zip(new_sets, self.base_sets)):
+            return self
+        return self.func(new_lambda, *new_sets)
 
 
 class Range(Set):

@@ -140,6 +140,12 @@ def test_ImageSet():
     raises(TypeError, lambda: ImageSet(Lambda(x, x**2), 1))
 
 
+def test_imageset_subs_free_parameter():
+    a = Symbol('a')
+    img = ImageSet(Lambda(t, t + a), S.Integers)
+    assert img.subs(a, 2) == ImageSet(Lambda(t, t + 2), S.Integers)
+
+
 def test_image_is_ImageSet():
     assert isinstance(imageset(x, sqrt(sin(x)), Range(5)), ImageSet)
 
