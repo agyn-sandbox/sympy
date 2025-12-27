@@ -8,6 +8,7 @@ from sympy.core.relational import (Relational, Equality, Unequality,
                                    StrictLessThan, Rel, Eq, Lt, Le,
                                    Gt, Ge, Ne)
 from sympy.sets.sets import Interval, FiniteSet
+from sympy.sets.conditionset import ConditionSet
 
 from itertools import combinations
 
@@ -425,6 +426,12 @@ def test_univariate_relational_as_set():
         Interval(0, oo, True, True)
 
     assert (x**2 >= 4).as_set() == Interval(-oo, -2) + Interval(2, oo)
+
+
+def test_relational_as_set_conditionset_fallback():
+    n = symbols('n', real=True)
+    expr = Eq(n*cos(n) - 3*sin(n), 0)
+    assert expr.as_set() == ConditionSet(n, expr, S.Reals)
 
 
 @XFAIL
