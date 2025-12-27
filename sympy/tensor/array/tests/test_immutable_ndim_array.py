@@ -73,7 +73,7 @@ def test_ndim_array_initiation():
 
     from sympy.abc import x
     rank_zero_array = ImmutableDenseNDimArray(x)
-    assert len(rank_zero_array) == 0
+    assert len(rank_zero_array) == 1
     assert rank_zero_array.shape == ()
     assert rank_zero_array.rank() == 0
     assert rank_zero_array[()] == x
@@ -384,3 +384,21 @@ def test_issue_12665():
     arr = ImmutableDenseNDimArray([1, 2, 3])
     # This should NOT raise an exception:
     hash(arr)
+
+def test_len_rank_cases():
+    from sympy import Array
+
+    rank_zero = Array(3)
+    assert rank_zero.rank() == 0
+    assert rank_zero.shape == ()
+    assert len(rank_zero) == 1
+
+    rank_one = Array([1, 2, 3])
+    assert rank_one.rank() == 1
+    assert rank_one.shape == (3,)
+    assert len(rank_one) == 3
+
+    rank_two = Array([[1, 2], [3, 4]])
+    assert rank_two.rank() == 2
+    assert rank_two.shape == (2, 2)
+    assert len(rank_two) == 4
