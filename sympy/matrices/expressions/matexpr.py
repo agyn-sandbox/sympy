@@ -6,7 +6,7 @@ from sympy.core import S, Symbol, Tuple, Integer, Basic, Expr
 from sympy.core.decorators import call_highest_priority
 from sympy.core.compatibility import range
 from sympy.core.sympify import SympifyError, sympify
-from sympy.functions import conjugate, adjoint
+from sympy.functions import conjugate, adjoint, KroneckerDelta
 from sympy.matrices import ShapeError
 from sympy.simplify import simplify
 
@@ -476,10 +476,7 @@ class Identity(MatrixExpr):
         return self
 
     def _entry(self, i, j):
-        if i == j:
-            return S.One
-        else:
-            return S.Zero
+        return KroneckerDelta(i, j)
 
     def _eval_determinant(self):
         return S.One

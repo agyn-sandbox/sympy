@@ -1,5 +1,4 @@
-from sympy import KroneckerDelta, diff, Piecewise, And
-from sympy import Sum
+from sympy import KroneckerDelta, diff, Piecewise, And, Sum, refine, Q
 
 from sympy.core import S, symbols, Add, Mul
 from sympy.functions import transpose, sin, cos, sqrt
@@ -89,6 +88,24 @@ def test_Identity_doit():
     assert isinstance(Inn.rows, Add)
     assert Inn.doit() == Identity(2*n)
     assert isinstance(Inn.doit().rows, Mul)
+
+
+def test_Identity_kronecker_entry_and_sum():
+    n = symbols('n', integer=True, positive=True)
+    C = MatrixSymbol('C', n, n)
+    i, j = symbols('i j', integer=True)
+    e = refine(C.T * C, Q.orthogonal(C)).doit()
+
+    assert e == Identity(n)
+    assert Identity(n)[i, j] == KroneckerDelta(i, j)
+    double_sum = Sum(Sum(e[i, j], (i, 0, n - 1)), (j, 0, n - 1)).doit()
+    double_sum = double_sum.replace(lambda expr: isinstance(expr, Piecewise), lambda expr: expr.args[0][0])
+    assert double_sum.doit() == n
+    assert Sum(e[0, i], (i, 0, n - 1)).doit() == 1
+    assert Sum(e[i, 0], (i, 0, n - 1)).doit() == 1
+    identity_sum = Sum(Sum(Identity(n)[i, j], (i, 0, n - 1)), (j, 0, n - 1)).doit()
+    identity_sum = identity_sum.replace(lambda expr: isinstance(expr, Piecewise), lambda expr: expr.args[0][0])
+    assert identity_sum.doit() == n
 
 
 def test_addition():
