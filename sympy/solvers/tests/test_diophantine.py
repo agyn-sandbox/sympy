@@ -176,6 +176,18 @@ def test_issue_18138():
         assert not diop_simplify(eq.xreplace(dict(zip(v, sol))))
 
 
+def test_diophantine_permute_syms_order_consistency():
+    from sympy.abc import m, n
+    from sympy.solvers.diophantine import diophantine
+    from sympy.utilities.iterables import signed_permutations
+
+    eq = n**4 + m**4 - (2**4 + 3**4)
+    expected_mn = set(signed_permutations((2, 3)))
+    assert diophantine(eq, syms=(m, n), permute=True) == expected_mn
+    expected_nm = {(b, a) for (a, b) in expected_mn}
+    assert diophantine(eq, syms=(n, m), permute=True) == expected_nm
+
+
 @slow
 def test_quadratic_non_perfect_slow():
     assert check_solutions(8*x**2 + 10*x*y - 2*y**2 - 32*x - 13*y - 23)
