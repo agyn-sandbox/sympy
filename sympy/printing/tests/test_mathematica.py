@@ -2,7 +2,7 @@ from sympy.core import (S, pi, oo, symbols, Function,
                         Rational, Integer, Tuple, Derivative)
 from sympy.integrals import Integral
 from sympy.concrete import Sum
-from sympy.functions import exp, sin, cos, conjugate
+from sympy.functions import exp, sin, cos, conjugate, Max, Min
 
 from sympy import mathematica_code as mcode
 
@@ -28,6 +28,13 @@ def test_Function():
     assert mcode(f(x, y, z)) == "f[x, y, z]"
     assert mcode(sin(x) ** cos(x)) == "Sin[x]^Cos[x]"
     assert mcode(conjugate(x)) == "Conjugate[x]"
+
+
+def test_MinMax():
+    assert mcode(Max(x, 2)) == "Max[2, x]"
+    assert mcode(Max(2, x)) == "Max[2, x]"
+    assert mcode(Min(x, 2)) == "Min[2, x]"
+    assert mcode(Min(2, x)) == "Min[2, x]"
 
 
 def test_Pow():

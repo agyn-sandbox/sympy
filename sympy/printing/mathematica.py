@@ -6,6 +6,7 @@ from __future__ import print_function, division
 from sympy.printing.codeprinter import CodePrinter
 from sympy.printing.str import StrPrinter
 from sympy.printing.precedence import precedence
+from sympy.utilities.iterables import default_sort_key
 
 # Used in MCodePrinter._print_Function(self)
 known_functions = {
@@ -100,6 +101,14 @@ class MCodePrinter(CodePrinter):
                 if cond(*expr.args):
                     return "%s[%s]" % (mfunc, self.stringify(expr.args, ", "))
         return expr.func.__name__ + "[%s]" % self.stringify(expr.args, ", ")
+
+    def _print_Max(self, expr):
+        args = sorted(expr.args, key=default_sort_key)
+        return "Max[%s]" % self.stringify(args, ", ")
+
+    def _print_Min(self, expr):
+        args = sorted(expr.args, key=default_sort_key)
+        return "Min[%s]" % self.stringify(args, ", ")
 
     def _print_Integral(self, expr):
         if len(expr.variables) == 1 and not expr.limits[0][1:]:
