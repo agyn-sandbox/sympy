@@ -678,6 +678,24 @@ def test_Poly_mul():
     assert 2 * Poly(x, x) == Poly(2*x, x)
 
 
+def test_Poly_rmul_evaluation():
+    a = Symbol('a', commutative=False)
+
+    assert x*Poly(x, x) == Poly(x**2, x)
+    assert S(2)*Poly(x, x) == Poly(2*x, x)
+    assert S(-2)*Poly(x, x) == Poly(-2*x, x)
+
+    assert (S(1)/2) * Poly(x, x, domain=ZZ) == Poly(S(1)/2*x, x, domain='QQ')
+    assert (S(1)/2) * Poly(x, x, domain=QQ) == Poly(S(1)/2*x, x, domain='QQ')
+
+    assert y*Poly(x, x) == Poly(y*x, x, domain='ZZ[y]')
+    assert x*Poly(x + y, x, y) == Poly(x*(x + y), x, y, domain='ZZ')
+
+    assert a*Poly(x, x) == Mul(a, Poly(x, x))
+
+    assert Poly(x, x)*x == Poly(x**2, x)
+    assert Poly(x, x)*S(-2) == Poly(-2*x, x)
+
 def test_Poly_sqr():
     assert Poly(x*y, x, y).sqr() == Poly(x**2*y**2, x, y)
 
