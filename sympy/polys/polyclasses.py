@@ -584,9 +584,11 @@ class DMP(PicklableWithSlots, CantSympify):
         return dmp_l1_norm(f.rep, f.lev, f.dom)
 
     def clear_denoms(f):
-        """Clear denominators, but keep the ground domain. """
+        """Clear denominators, but keep the ground domain.
+        Ensure canonical dense representation (strip leading zeros). """
         coeff, F = dmp_clear_denoms(f.rep, f.lev, f.dom)
-        return coeff, f.per(F)
+        from sympy.polys.densebasic import dmp_strip
+        return coeff, f.per(dmp_strip(F, f.lev))
 
     def integrate(f, m=1, j=0):
         """Computes the ``m``-th order indefinite integral of ``f`` in ``x_j``. """
