@@ -3,7 +3,7 @@ from __future__ import (absolute_import, division, print_function)
 
 from sympy.codegen import Assignment
 from sympy.core import Expr, Mod, symbols, Eq, Le, Gt, zoo, oo
-from sympy.core.numbers import pi
+from sympy.core.numbers import pi, Rational
 from sympy.codegen.ast import none
 from sympy.external import import_module
 from sympy.logic import And, Or
@@ -40,6 +40,11 @@ def test_PythonCodePrinter():
 def test_MpmathPrinter():
     p = MpmathPrinter()
     assert p.doprint(sign(x)) == 'mpmath.sign(x)'
+
+
+def test_MpmathPrinter_rational():
+    p = MpmathPrinter()
+    assert p.doprint(Rational(232, 3)) == 'mpmath.mpf(232)/mpmath.mpf(3)'
 
 
 def test_NumPyPrinter():
