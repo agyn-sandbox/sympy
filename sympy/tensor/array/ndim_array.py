@@ -175,6 +175,8 @@ class NDimArray(object):
         9
 
         """
+        if self._rank == 0:
+            return 1
         return self._loop_size
 
     @property
