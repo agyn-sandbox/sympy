@@ -518,6 +518,14 @@ def test_Relational():
     assert str(Ne(x, 1) & Ne(x, 2)) == "Ne(x, 1) & Ne(x, 2)"
 
 
+def test_str_relational_respects_settings():
+    assert sstr(Eq(x, S(1)/2), sympy_integers=True) == "Eq(x, S(1)/2)"
+
+
+def test_str_limit_respects_settings():
+    assert sstr(Limit(x, x, S(1)/2), sympy_integers=True) == "Limit(x, x, S(1)/2)"
+
+
 def test_CRootOf():
     assert str(rootof(x**5 + 2*x - 1, 0)) == "CRootOf(x**5 + 2*x - 1, 0)"
 
