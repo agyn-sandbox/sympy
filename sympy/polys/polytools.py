@@ -6238,18 +6238,16 @@ def sqf_list(f, *gens, **args):
     """
     options.allowed_flags(args, ['polys'])
 
-    expr = sympify(f)
     constant_msg = "sqf_list expects a univariate polynomial of degree >= 1; got constant"
-    nonpoly_msg = "sqf_list expects a univariate polynomial; got non-polynomial input"
+    multivariate_msg = "sqf_list expects a univariate polynomial; got multivariate input"
+
+    poly_args = dict(args)
+    poly_args['expand'] = True
 
     try:
-        poly, opt = poly_from_expr(expr, *gens, **args)
+        poly, opt = poly_from_expr(f, *gens, **poly_args)
     except (PolificationFailed, PolynomialError):
-        if expr.is_number:
-            raise ValueError(constant_msg)
-        raise ValueError(nonpoly_msg)
-
-    multivariate_msg = "sqf_list expects a univariate polynomial; got multivariate input"
+        return _generic_factor_list(f, gens, args, method='sqf')
 
     if opt.gens and len(opt.gens) != 1:
         raise ValueError(multivariate_msg)
