@@ -173,11 +173,13 @@ def test_residue():
     raises(NotImplementedError, lambda: nthroot_mod(16, 5, 36))
     raises(NotImplementedError, lambda: nthroot_mod(9, 16, 36))
 
-    # Zero residue cases: when p divides a, x ≡ 0 (mod p) is a root
+    # Zero residue cases: when p divides a, x == 0 (mod p) is a root
     assert nthroot_mod(17*17, 5, 17) == 0
     assert nthroot_mod(17*17, 5, 17, True) == [0]
     assert nthroot_mod(0, 3, 5) == 0
     assert nthroot_mod(0, 3, 5, True) == [0]
+    raises(ValueError, lambda: nthroot_mod(-17, 3, 17))
+    raises(ValueError, lambda: nthroot_mod(0, -1, 5))
     # p == 2
     assert nthroot_mod(14, 4, 2) == 0
     assert nthroot_mod(0, 7, 2, True) == [0]
