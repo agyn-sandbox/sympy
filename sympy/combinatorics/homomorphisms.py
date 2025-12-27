@@ -308,16 +308,47 @@ def homomorphism(domain, codomain, gens, images=(), check=True):
     return GroupHomomorphism(domain, codomain, images)
 
 def _check_homomorphism(domain, codomain, images):
+    gens = None
+    sym_to_perm = None
+    is_perm_domain = isinstance(domain, PermutationGroup)
+
     if hasattr(domain, 'relators'):
         rels = domain.relators
+        if hasattr(domain, 'generators'):
+            gens = domain.generators
     else:
-        gens = domain.presentation().generators
-        rels = domain.presentation().relators
+        pres = domain.presentation()
+        gens = pres.generators
+        rels = pres.relators
+        if is_perm_domain:
+            domain_gens = domain.generators
+            if len(gens) != len(domain_gens):
+                raise ValueError("PermutationGroup presentation generators do not align with domain generators")
+            sym_to_perm = {}
+            for idx, gen in enumerate(gens):
+                gen_form = gen.array_form
+                if not gen_form:
+                    raise ValueError("PermutationGroup presentation contains empty generator")
+                sym = gen_form[0][0]
+                sym_to_perm[sym] = domain_gens[idx]
     identity = codomain.identity
 
     def _image(r):
         if r.is_identity:
             return identity
+        if sym_to_perm is not None:
+            w = identity
+            for sym, power in r.array_form:
+                try:
+                    generator = sym_to_perm[sym]
+                except KeyError as exc:
+                    raise ValueError(
+                        "Unexpected generator symbol %s in PermutationGroup relator" % sym
+                    ) from exc
+                if generator not in images:
+                    raise ValueError("Image for generator %s not provided" % generator)
+                w = w*images[generator]**power
+            return w
         else:
             w = identity
             r_arr = r.array_form
@@ -333,7 +364,7 @@ def _check_homomorphism(domain, codomain, images):
             # both indices
             while i < len(r):
                 power = r_arr[j][1]
-                if isinstance(domain, PermutationGroup) and r[i] in gens:
+                if isinstance(domain, PermutationGroup) and gens is not None and r[i] in gens:
                     s = domain.generators[gens.index(r[i])]
                 else:
                     s = r[i]

@@ -3,7 +3,7 @@ from sympy.combinatorics.perm_groups import PermutationGroup
 from sympy.combinatorics.homomorphisms import homomorphism, group_isomorphism, is_isomorphic
 from sympy.combinatorics.free_groups import free_group
 from sympy.combinatorics.fp_groups import FpGroup
-from sympy.combinatorics.named_groups import AlternatingGroup, DihedralGroup, CyclicGroup
+from sympy.combinatorics.named_groups import AlternatingGroup, DihedralGroup, CyclicGroup, SymmetricGroup
 from sympy.testing.pytest import raises
 
 def test_homomorphism():
@@ -107,3 +107,17 @@ def test_check_homomorphism():
     b = Permutation(1,3)
     G = PermutationGroup([a, b])
     raises(ValueError, lambda: homomorphism(G, G, [a], [a]))
+
+
+def test_permutation_group_homomorphism_regressions():
+    D3 = DihedralGroup(3)
+    T = homomorphism(D3, D3, D3.generators, D3.generators)
+    assert T.is_isomorphism()
+
+    S3 = SymmetricGroup(3)
+    id_s3 = homomorphism(S3, S3, S3.generators, S3.generators)
+    assert id_s3.is_isomorphism()
+
+    A4 = AlternatingGroup(4)
+    id_a4 = homomorphism(A4, A4, A4.generators, A4.generators)
+    assert id_a4.is_isomorphism()
