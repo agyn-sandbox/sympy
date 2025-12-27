@@ -1,6 +1,7 @@
 from sympy import (Symbol, zeta, nan, Rational, Float, pi, dirichlet_eta, log,
                    zoo, expand_func, polylog, lerchphi, S, exp, sqrt, I,
-                   exp_polar, polar_lift, O, stieltjes)
+                   exp_polar, polar_lift, O, stieltjes, simplify, nsimplify,
+                   N)
 from sympy.utilities.randtest import (test_derivative_numerically as td,
                       random_complex_number as randcplx, verify_numerically as tn)
 
@@ -128,10 +129,22 @@ def test_polylog_expansion():
     assert polylog(s, 1) == zeta(s)
     assert polylog(s, -1) == -dirichlet_eta(s)
 
-    assert myexpand(polylog(1, z), -log(1 + exp_polar(-I*pi)*z))
+    assert myexpand(polylog(1, z), -log(1 - z))
+    assert not expand_func(polylog(1, z)).has(exp_polar)
+    assert simplify(expand_func(polylog(1, z).diff(z))
+                    - (-log(1 - z)).diff(z)) == 0
+    assert tn(polylog(1, z), -log(1 - z), z)
     assert myexpand(polylog(0, z), z/(1 - z))
     assert myexpand(polylog(-1, z), z**2/(1 - z)**2 + z/(1 - z))
     assert myexpand(polylog(-5, z), None)
+
+
+def test_polylog_dilog_half():
+    target = -log(2)**2/2 + pi**2/12
+    expr = polylog(2, S(1)/2)
+    assert expr == target
+    assert expr.expand(func=True) == target
+    assert nsimplify(N(expr), [pi**2, log(2)**2]) == target
 
 
 def test_lerchphi_expansion():

@@ -1946,12 +1946,10 @@ def test_R17():
                - 2.8469909700078206) < 1e-15
 
 
-@XFAIL
 def test_R18():
     k = symbols('k', integer=True, positive=True)
     Sm = Sum(1/(2**k*k**2), (k, 1, oo))
-    # returns polylog(2, 1/2),  particular value for 1/2 is not known.
-    # https://github.com/sympy/sympy/issues/7132
+    # polylog(2, 1/2) now evaluates to a known closed form.
     T = Sm.doit()
     assert T.simplify() == -log(2)**2/2 + pi**2/12
 
