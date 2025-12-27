@@ -217,6 +217,17 @@ def test_Permutation():
     assert b.cycle_structure == {2: 1, 3: 1, 1: 2}
 
 
+def test_permutation_subclass_construction():
+    class MyPerm(Permutation):
+        pass
+
+    assert isinstance(MyPerm(), MyPerm)
+    assert isinstance(MyPerm(1, 2), MyPerm)
+    assert isinstance(MyPerm(Cycle(1, 2)), MyPerm)
+    assert isinstance(MyPerm(Permutation([0, 1]), size=3), MyPerm)
+    assert isinstance(MyPerm([0, 1]), MyPerm)
+
+
 def test_josephus():
     assert Permutation.josephus(4, 6, 1) == Permutation([3, 1, 0, 2, 5, 4])
     assert Permutation.josephus(1, 5, 1).is_Identity
