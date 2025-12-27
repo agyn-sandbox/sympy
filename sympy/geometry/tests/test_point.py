@@ -1,4 +1,4 @@
-from sympy import I, Rational, Symbol, pi, sqrt, S
+from sympy import I, Rational, Symbol, pi, sqrt, S, sympify
 from sympy.geometry import Line, Point, Point2D, Point3D, Line3D, Plane
 from sympy.geometry.entity import rotate, scale, translate
 from sympy.matrices import Matrix
@@ -118,6 +118,39 @@ def test_point():
     raises(ValueError, lambda: p3.transform(p3))
     raises(ValueError, lambda: p.transform(Matrix([[1, 0], [0, 1]])))
 
+
+def test_point_scalar_multiplication_commutative():
+    p = Point(1, 3)
+    q = Point(2, -1)
+    half = S.Half
+    two_float = sympify(2.0)
+    a = Symbol('a')
+    nc = Symbol('nc', commutative=False)
+
+    assert 2*p == Point(2, 6)
+    assert p*2 == Point(2, 6)
+    assert q + 2*p == q + p*2
+
+    expected_half = Point(half, S(3)/2)
+    assert half*p == expected_half
+    assert p*half == expected_half
+
+    scaled_float = two_float*p
+    assert scaled_float == Point(2, 6)
+    assert all(coord.is_Float for coord in scaled_float.args)
+    assert p*two_float == scaled_float
+
+    expected_symbolic = Point(a, 3*a)
+    assert a*p == expected_symbolic
+    assert p*a == expected_symbolic
+    assert q + a*p == Point(2 + a, -1 + 3*a)
+
+    raises(TypeError, lambda: nc*p)
+    raises(TypeError, lambda: p*nc)
+
+    identity_matrix = Matrix([[1, 0], [0, 1]])
+    raises(TypeError, lambda: identity_matrix*p)
+    raises(TypeError, lambda: p*identity_matrix)
 
 def test_point3D():
     x = Symbol('x', real=True)

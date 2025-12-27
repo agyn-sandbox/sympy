@@ -104,6 +104,7 @@ class Point(GeometryEntity):
     """
 
     is_Point = True
+    _op_priority = 11.0
 
     def __new__(cls, *args, **kwargs):
         evaluate = kwargs.get('evaluate', global_evaluate[0])
@@ -274,7 +275,21 @@ class Point(GeometryEntity):
 
         sympy.geometry.point.Point.scale
         """
+        factor = self._validate_scalar_multiplier(factor)
+        return self._scale_by_factor(factor)
+
+    def __rmul__(self, factor):
+        factor = self._validate_scalar_multiplier(factor)
+        return self._scale_by_factor(factor)
+
+    @staticmethod
+    def _validate_scalar_multiplier(factor):
         factor = sympify(factor)
+        if not isinstance(factor, Expr) or not factor.is_commutative:
+            raise TypeError('Multiplier must be a commutative scalar expression')
+        return factor
+
+    def _scale_by_factor(self, factor):
         coords = [simplify(x*factor) for x in self.args]
         return Point(coords, evaluate=False)
 
