@@ -1,7 +1,7 @@
 from sympy import (Basic, Symbol, sin, cos, atan, exp, sqrt, Rational,
         Float, re, pi, sympify, Add, Mul, Pow, Mod, I, log, S, Max, symbols,
         oo, zoo, Integer, sign, im, nan, Dummy, factorial, comp, floor, Poly,
-        FiniteSet
+        FiniteSet, Piecewise, sinh, cosh, tanh, nfloat
 )
 from sympy.core.parameters import distribute
 from sympy.core.expr import unchanged
@@ -1912,6 +1912,42 @@ def test_Mod():
     # rewrite
     assert Mod(x, y).rewrite(floor) == x - y*floor(x/y)
     assert ((x - Mod(x, y))/y).rewrite(floor) == floor(x/y)
+
+
+def test_Mod_piecewise_no_exception():
+    pw = Piecewise((x, y > x), (y, True))
+    expr = Mod(pw/z, 1)
+    assert expr.func is Mod
+    assert expr.args == (pw/z, S.One)
+
+
+def test_Mod_piecewise_divisor_no_exception():
+    pw = Piecewise((2, y > x), (3, True))
+    expr = Mod(x, pw)
+    assert expr.func is Mod
+    assert expr.args[1].func is Piecewise
+
+
+def test_hyperbolic_piecewise_subs_no_exception():
+    x, y, z = symbols('x y z', real=True)
+    pw = Piecewise((x, y > x), (y, True))
+    for fun in (sinh, cosh, tanh):
+        expr = exp(fun(pw/z))
+        result = expr.subs({1: 1.0})
+        assert result.free_symbols == {x, y, z}
+
+
+def test_hyperbolic_piecewise_nfloat_no_exception():
+    x, y, z = symbols('x y z', real=True)
+    pw = Piecewise((x, y > x), (y, True))
+    for fun in (sinh, cosh, tanh):
+        expr = exp(fun(pw/z))
+        result = nfloat(expr)
+        assert result.free_symbols == {x, y, z}
+
+
+def test_Mod_gcd_simplification_non_piecewise_regression():
+    assert (12*x) % (15*x*y) == 3*x*Mod(4, 5*y)
 
 
 def test_Mod_Pow():
