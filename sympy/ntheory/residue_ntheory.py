@@ -770,11 +770,21 @@ def nthroot_mod(a, n, p, all_roots=False):
     a, n, p = as_int(a), as_int(n), as_int(p)
     if n == 2:
         return sqrt_mod(a, p, all_roots)
-    # see Hackman "Elementary Number Theory" (2009), page 76
-    if not is_nthpow_residue(a, n, p):
-        return None
+
+    residue_exists = is_nthpow_residue(a, n, p)
+
     if not isprime(p):
         raise NotImplementedError("Not implemented for composite p")
+
+    # see Hackman "Elementary Number Theory" (2009), page 76
+    if not residue_exists:
+        return None
+
+    # For prime moduli, handle zero residue early to include 0 as a root
+    # and avoid incorrect processing in the multiplicative group of units.
+    amod = a % p
+    if amod == 0:
+        return [0] if all_roots else 0
 
     if (p - 1) % n == 0:
         return _nthroot_mod1(a, n, p, all_roots)
