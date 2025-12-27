@@ -253,7 +253,7 @@ class polylog(Function):
     >>> from sympy import expand_func
     >>> from sympy.abc import z
     >>> expand_func(polylog(1, z))
-    -log(z*exp_polar(-I*pi) + 1)
+    -log(1 - z)
     >>> expand_func(polylog(0, z))
     z/(-z + 1)
 
@@ -271,6 +271,8 @@ class polylog(Function):
 
     @classmethod
     def eval(cls, s, z):
+        if s == 2 and z == S.Half:
+            return pi**2/12 - log(2)**2/2
         if z == 1:
             return zeta(s)
         elif z == -1:
@@ -288,10 +290,10 @@ class polylog(Function):
         return z*lerchphi(z, s, 1)
 
     def _eval_expand_func(self, **hints):
-        from sympy import log, expand_mul, Dummy, exp_polar, I
+        from sympy import log, expand_mul, Dummy
         s, z = self.args
         if s == 1:
-            return -log(1 + exp_polar(-I*pi)*z)
+            return -log(1 - z)
         if s.is_Integer and s <= 0:
             u = Dummy('u')
             start = u/(1 - u)
