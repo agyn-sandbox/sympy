@@ -12,6 +12,7 @@ from sympy.printing.pycode import (
     MpmathPrinter, NumPyPrinter, PythonCodePrinter, pycode, SciPyPrinter
 )
 from sympy.utilities.pytest import raises
+from sympy.tensor.indexed import Idx, IndexedBase
 
 x, y, z = symbols('x y z')
 
@@ -96,3 +97,18 @@ def test_NumPyPrinter_print_seq():
     n = NumPyPrinter()
 
     assert n._print_seq(range(2)) == '(0, 1,)'
+
+def test_pycode_Indexed_simple():
+    base = IndexedBase('p')
+    result = pycode(base[0])
+    assert result == 'p[0]'
+    assert 'Not supported' not in result
+
+
+def test_pycode_Indexed_multi_and_symbolic_indices():
+    base = IndexedBase('A')
+    i, j = symbols('i j')
+    k = Idx('k')
+
+    assert pycode(base[i, j]) == 'A[i, j]'
+    assert pycode(base[i + j, k]) == 'A[i + j, k]'
