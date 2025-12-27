@@ -84,6 +84,27 @@ def test_list_args():
     assert f(1, 2) == 3
 
 
+def test_python_tuple_singleton_trailing_comma():
+    f = lambdify([], tuple([1]))
+    source = inspect.getsource(f)
+    assert "return (1,)" in source
+    assert f() == (1,)
+
+
+def test_python_tuple_multi_element_source():
+    f = lambdify([], (1, 2))
+    source = inspect.getsource(f)
+    assert "return (1, 2)" in source
+    assert f() == (1, 2)
+
+
+def test_python_tuple_nested_sequences():
+    f = lambdify([], ([1], (2,)))
+    source = inspect.getsource(f)
+    assert "return ([1], (2,))" in source
+    assert f() == ([1], (2,))
+
+
 def test_nested_args():
     f1 = lambdify([[w, x]], [w, x])
     assert f1([91, 2]) == [91, 2]
