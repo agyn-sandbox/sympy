@@ -9,3 +9,4 @@ from . import mathieu_functions
 from . import singularity_functions
 
 from . import polynomials
+from . import q_functions

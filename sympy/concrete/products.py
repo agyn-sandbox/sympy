@@ -237,6 +237,7 @@ class Product(ExprWithIntLimits):
         from sympy.concrete.delta import deltaproduct, _has_simple_delta
         from sympy.concrete.summations import summation
         from sympy.functions import KroneckerDelta, RisingFactorial
+        from sympy.functions.special.q_functions import q_pochhammer
 
         (k, a, n) = limits
 
@@ -275,18 +276,60 @@ class Product(ExprWithIntLimits):
             return poly.LC()**(n - a + 1) * A * B
 
         elif term.is_Add:
+            count = n - a + 1
+
+            add_args = term.args
+            k_terms = [arg for arg in add_args if arg.has(k)]
+            if len(k_terms) == 1:
+                k_term = k_terms[0]
+                const_terms = [arg for arg in add_args if not arg.has(k)]
+                if const_terms:
+                    const_term = sum(const_terms, S.Zero)
+
+                    if const_term is not S.Zero and not const_term.has(k):
+                        coeff, power_term = k_term.as_independent(k, as_Add=False)
+                        if not coeff.has(k) and power_term != 1 and power_term.has(k):
+                            base = None
+                            exp = None
+
+                            if power_term.is_Pow:
+                                base = power_term.base
+                                exp = power_term.exp
+                            elif power_term.is_Mul:
+                                ind_coeff, pow_part = power_term.as_independent(k, as_Add=False)
+                                if ind_coeff.has(k):
+                                    pow_part = None
+                                else:
+                                    coeff *= ind_coeff
+                                    power_term = pow_part
+                                    if power_term.is_Pow:
+                                        base = power_term.base
+                                        exp = power_term.exp
+
+                            if base is not None and not base.has(k) and exp is not None:
+                                if exp == k:
+                                    q_base = base
+                                elif exp == -k:
+                                    q_base = base**-1
+                                else:
+                                    q_base = None
+
+                                if q_base is not None and not q_base.has(k):
+                                    return const_term**count * q_pochhammer(-coeff/const_term, q_base, count)
+
             p, q = term.as_numer_denom()
-            q = self._eval_product(q, (k, a, n))
-            if q.is_Number:
+            if p == term:
+                return None
 
-                # There is expression, which couldn't change by
-                # as_numer_denom(). E.g. n**(2/3) + 1 --> (n**(2/3) + 1, 1).
-                # We have to catch this case.
+            q_eval = self._eval_product(q, (k, a, n))
+            if q_eval is None:
+                return None
 
-                p = sum([self._eval_product(i, (k, a, n)) for i in p.as_coeff_Add()])
-            else:
-                p = self._eval_product(p, (k, a, n))
-            return p / q
+            p_eval = self._eval_product(p, (k, a, n))
+            if p_eval is None:
+                return None
+
+            return p_eval / q_eval
 
         elif term.is_Mul:
             exclude, include = [], []
