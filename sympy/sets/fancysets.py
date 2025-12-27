@@ -372,6 +372,7 @@ class ImageSet(Set):
             raise NotImplementedError(filldedent('''
             Determining whether %s contains %s has not
             been implemented.''' % (msgset, other)))
+        symbolic_conditions = []
         for soln in solns:
             try:
                 if soln in self.base_set:
@@ -382,7 +383,11 @@ class ImageSet(Set):
                     continue
                 if membership_expr is S.true:
                     return S.true
-                return S.true
+                symbolic_conditions.append(membership_expr)
+        if symbolic_conditions:
+            if len(symbolic_conditions) == 1:
+                return symbolic_conditions[0]
+            return Or(*symbolic_conditions)
         return S.false
 
     @property
