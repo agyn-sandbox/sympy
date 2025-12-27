@@ -1,7 +1,7 @@
 from sympy import S, Symbol
 from sympy.core.logic import fuzzy_and, fuzzy_bool, fuzzy_not, fuzzy_or
 from sympy.core.relational import Eq
-from sympy.sets.sets import FiniteSet, Interval, Set, Union
+from sympy.sets.sets import FiniteSet, Interval, ProductSet, Set, Union
 from sympy.sets.fancysets import Complexes, Reals, Range, Rationals
 from sympy.multipledispatch import dispatch
 
@@ -73,6 +73,7 @@ def is_subset_sets(a_range, b_finiteset): # noqa:F811
     except ValueError:
         # symbolic Range of unknown size
         return None
+
     if a_size > len(b_finiteset):
         return False
     elif any(arg.has(Symbol) for arg in a_range.args):
@@ -99,6 +100,45 @@ def is_subset_sets(a_range, b_finiteset): # noqa:F811
             if len(a_set) == 0:
                 return True
         return None
+
+@dispatch(ProductSet, FiniteSet)  # type: ignore # noqa:F811
+def is_subset_sets(product, finite):  # noqa:F811
+    product_is_finite = product.is_finite_set
+    if product_is_finite is False:
+        return False
+
+    finite_size = len(finite)
+
+    try:
+        product_size = len(product)
+    except (TypeError, ValueError, NotImplementedError):
+        product_size = None
+
+    if product_size is not None:
+        if product_size > finite_size:
+            return False
+        if product_size == finite_size:
+            comparison = finite.is_subset(product)
+            if comparison is True:
+                return True
+            if comparison is False:
+                return False
+
+    if product_is_finite is not True:
+        return None
+
+    try:
+        for element in product:
+            contains = finite._contains(element)
+            if contains in (True, S.true):
+                continue
+            if contains in (False, S.false):
+                return False
+            return None
+    except (TypeError, ValueError, NotImplementedError):
+        return None
+
+    return True
 
 @dispatch(Interval, Range)  # type: ignore # noqa:F811
 def is_subset_sets(a_interval, b_range): # noqa:F811

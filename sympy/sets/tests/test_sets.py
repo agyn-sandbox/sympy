@@ -618,6 +618,36 @@ def test_ProductSet():
     assert Contains((1, 2), Z2) is S.true
 
 
+def test_ProductSet_is_subset_FiniteSet_cases():
+    # Regression for agyn-sandbox/sympy#118
+    A = FiniteSet(1, 2)
+    product_square = ProductSet(A, A)
+
+    assert product_square.is_subset(
+        FiniteSet((1, 1), (1, 2), (2, 1), (2, 2))
+    ) is True
+
+    assert product_square.is_subset(
+        FiniteSet((1, 1), (1, 2), (2, 1))
+    ) is False
+
+    assert product_square.is_subset(
+        FiniteSet((1, 1), (1, 2), (2, 1), (2, 2), (-1, -1))
+    ) is True
+
+    infinite_factor = ProductSet(S.Integers, A)
+    assert infinite_factor.is_subset(FiniteSet((1, 1))) is False
+
+    symbolic_square = ProductSet(FiniteSet(x), FiniteSet(1))
+    assert symbolic_square.is_subset(FiniteSet((y, 1))) is None
+
+    nested_product = ProductSet(ProductSet(FiniteSet(1), FiniteSet(2)), FiniteSet(3))
+    assert nested_product.is_subset(FiniteSet(((1, 2), 3))) is True
+
+    cardinality_gap = ProductSet(FiniteSet(1, 2), FiniteSet(3, 4))
+    assert cardinality_gap.is_subset(FiniteSet((1, 3), (1, 4), (2, 3))) is False
+
+
 def test_ProductSet_of_single_arg_is_not_arg():
     assert unchanged(ProductSet, Interval(0, 1))
     assert unchanged(ProductSet, ProductSet(Interval(0, 1)))
