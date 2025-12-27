@@ -106,6 +106,7 @@ class Poly(Expr):
 
     is_commutative = True
     is_Poly = True
+    _op_priority = 10.009
 
     def __new__(cls, rep, *gens, **args):
         """Create a new polynomial instance out of something useful. """
@@ -4049,11 +4050,14 @@ class Poly(Expr):
 
     @_sympifyit('g', NotImplemented)
     def __rmul__(f, g):
+        if getattr(g, 'is_commutative', True) is False:
+            return Mul(g, f)
+
         if not g.is_Poly:
             try:
                 g = f.__class__(g, *f.gens)
             except PolynomialError:
-                return g*f.as_expr()
+                return Mul(g, f)
 
         return g.mul(f)
 
