@@ -7,6 +7,36 @@ from sympy.sets.fancysets import (Integers, Naturals, Reals, Range,
 from sympy.sets.sets import UniversalSet, imageset, ProductSet
 
 
+def _linear_solutions(expr, var):
+    """Return linear solutions for factors of ``expr`` in ``var``.
+
+    Returns a tuple ``(solutions, has_factors)`` where ``solutions`` is a
+    tuple of roots obtained from linear factors (empty if none) and
+    ``has_factors`` indicates whether any factors depending on ``var`` were
+    encountered. If a non-linear factor or solver failure is found, ``solutions``
+    is ``None`` and ``has_factors`` is ``True`` to signal the caller to fall
+    back on a ConditionSet."""
+
+    from sympy.solvers.solvers import solve_linear
+
+    factors = [factor for factor in Mul.make_args(expr) if factor.has(var)]
+    if not factors:
+        return tuple(), False
+
+    solutions = []
+    for factor in factors:
+        try:
+            solved_var, sol = solve_linear(factor, 0)
+        except (ValueError, NotImplementedError):
+            return None, True
+        if solved_var == var:
+            solutions.append(sol)
+        else:
+            return None, True
+
+    return tuple(solutions), True
+
+
 @dispatch(ConditionSet, ConditionSet)  # type: ignore # noqa:F811
 def intersection_sets(a, b): # noqa:F811
     return None
@@ -278,7 +308,7 @@ def intersection_sets(self, other): # noqa:F811
 
     if other == S.Reals:
         from sympy.core.function import expand_complex
-        from sympy.solvers.solvers import denoms, solve_linear
+        from sympy.solvers.solvers import denoms
         from sympy.core.relational import Eq
         f = self.lamda.expr
         n = self.lamda.variables[0]
@@ -290,36 +320,37 @@ def intersection_sets(self, other): # noqa:F811
         im = expand_complex(im)
 
         re = re.subs(n_, n)
-        im = im.subs(n_, n)
-        ifree = im.free_symbols
+        im = expand_complex(im.subs(n_, n))
         lam = Lambda(n, re)
+
+        restricted_base = base_set
+
         if im.is_zero:
-            # allow re-evaluation
-            # of self in this case to make
-            # the result canonical
-            pass
+            restricted_base = base_set
         elif im.is_zero is False:
             return S.EmptySet
-        elif ifree != {n}:
+        elif im.free_symbols - {n}:
             return None
         else:
-            # univarite imaginary part in same variable
-            x, xis = zip(*[solve_linear(i, 0) for i in Mul.make_args(im) if n in i.free_symbols])
-            if x and all(i == n for i in x):
-                base_set -= FiniteSet(xis)
+            solutions, _ = _linear_solutions(im, n)
+            if solutions:
+                restricted_base = restricted_base.intersect(FiniteSet(*solutions))
             else:
-                base_set -= ConditionSet(n, Eq(im, 0), S.Integers)
-        # exclude values that make denominators 0
-        for i in denoms(f):
-            if i.has(n):
-                sol = list(zip(*[solve_linear(i, 0) for i in Mul.make_args(im) if n in i.free_symbols]))
-                if sol != []:
-                    x, xis = sol
-                    if x and all(i == n for i in x):
-                        base_set -= FiniteSet(xis)
-                else:
-                    base_set -= ConditionSet(n, Eq(i, 0), S.Integers)
-        return imageset(lam, base_set)
+                restricted_base = restricted_base.intersect(
+                    ConditionSet(n, Eq(im, 0), base_set))
+
+        for denom in denoms(f):
+            if not denom.has(n):
+                continue
+            denom_solutions, has_factors = _linear_solutions(denom, n)
+            if not has_factors:
+                continue
+            if denom_solutions:
+                restricted_base = restricted_base - FiniteSet(*denom_solutions)
+            else:
+                restricted_base = restricted_base - ConditionSet(n, Eq(denom, 0), base_set)
+
+        return imageset(lam, restricted_base)
 
     elif isinstance(other, Interval):
         from sympy.solvers.solveset import (invert_real, invert_complex,
