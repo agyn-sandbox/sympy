@@ -1,5 +1,6 @@
 from sympy.core.numbers import (I, Rational, pi)
 from sympy.core.relational import (GreaterThan, LessThan, StrictGreaterThan, StrictLessThan)
+from sympy.core.function import Function, UndefinedFunction
 from sympy.core.symbol import (Dummy, Symbol, Wild, symbols)
 from sympy.core.sympify import sympify  # can't import as S yet
 from sympy.core.symbol import uniquely_named_symbol, _symbol, Str
@@ -325,6 +326,41 @@ def test_symbols():
     raises(ValueError, lambda: symbols('a::'))
     raises(ValueError, lambda: symbols(':a:'))
     raises(ValueError, lambda: symbols('::a'))
+
+
+def test_symbols_cls_function_nested_ranges():
+    funcs = symbols(("q:2", "u:2"), cls=Function)
+
+    assert funcs == (
+        (Function("q0"), Function("q1")),
+        (Function("u0"), Function("u1")),
+    )
+    assert all(isinstance(f, UndefinedFunction) for group in funcs for f in group)
+
+
+def test_symbols_cls_function_mixed_nested_containers():
+    nested = symbols((["q:2", "phi"], ("u:2", "psi")), cls=Function)
+
+    list_group, tuple_group = nested
+    q_range, phi = list_group
+    u_range, psi = tuple_group
+
+    assert tuple(func.__name__ for func in q_range) == ("q0", "q1")
+    assert phi.__name__ == "phi"
+    assert tuple(func.__name__ for func in u_range) == ("u0", "u1")
+    assert psi.__name__ == "psi"
+    groups = (q_range, (phi,), u_range, (psi,))
+    assert all(isinstance(f, UndefinedFunction) for group in groups for f in group)
+
+
+def test_symbols_cls_symbol_nested_containers_regression():
+    syms = symbols(("q:2", "u:2"), cls=Symbol)
+
+    assert syms == (
+        (Symbol("q0"), Symbol("q1")),
+        (Symbol("u0"), Symbol("u1")),
+    )
+    assert all(isinstance(s, Symbol) for group in syms for s in group)
 
 
 def test_symbols_become_functions_issue_3539():
