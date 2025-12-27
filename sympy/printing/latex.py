@@ -1477,8 +1477,44 @@ class LatexPrinter(Printer):
             return r"%s^\dagger" % self._print(mat)
 
     def _print_MatAdd(self, expr):
-        terms = list(expr.args)
-        tex = " + ".join(map(self._print, terms))
+    def _print_MatAdd(self, expr):
+        # Render subtraction for matrix terms to avoid "+ -X" and "-1 X".
+        if self.order == 'none':
+            terms = list(expr.args)
+        else:
+            terms = self._as_ordered_terms(expr)
+
+        tex = ""
+        from sympy.matrices.expressions.matmul import MatMul
+        for i, term in enumerate(terms):
+            neg = False
+            pos_term = term
+            if getattr(term, 'is_MatMul', False):
+                coeff, matrices = term.as_coeff_matrices()
+                try:
+                    is_neg = coeff.is_Number and coeff.is_negative
+                except AttributeError:
+                    is_neg = False
+                if is_neg:
+                    neg = True
+                    abs_coeff = -coeff
+                    if abs_coeff == 1:
+                        pos_term = MatMul(*matrices, evaluate=False)
+                    else:
+                        pos_term = MatMul(abs_coeff, *matrices, evaluate=False)
+            elif term.is_Number and term < 0:
+                neg = True
+                pos_term = -term
+
+            if i == 0:
+                sep = "- " if neg else ""
+            else:
+                sep = " - " if neg else " + "
+
+            part = self._print(pos_term)
+            if self._needs_add_brackets(pos_term):
+                part = r"\left(%s\right)" % part
+            tex += sep + part
         return tex
 
     def _print_MatMul(self, expr):

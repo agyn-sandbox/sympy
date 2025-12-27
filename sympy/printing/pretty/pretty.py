@@ -819,7 +819,54 @@ class PrettyPrinter(Printer):
         return self._print(B.blocks)
 
     def _print_MatAdd(self, expr):
-        return self._print_seq(expr.args, None, None, ' + ')
+        # Render subtraction rather than '+ -X' for matrix terms.
+        if self.order == 'none':
+            terms = list(expr.args)
+        else:
+            terms = self._as_ordered_terms(expr)
+
+        pforms = []
+        from sympy.matrices.expressions.matmul import MatMul
+        def pretty_negative(pform, index):
+            """Prepend a minus sign to a pretty form (mirrors _print_Add)."""
+            if index == 0:
+                pform_neg = '- ' if pform.height() > 1 else '-'
+            else:
+                pform_neg = ' - '
+            if (pform.binding > prettyForm.NEG or pform.binding == prettyForm.ADD):
+                p = stringPict(*pform.parens())
+            else:
+                p = pform
+            p = stringPict.next(pform_neg, p)
+            return prettyForm(binding=prettyForm.NEG, *p)
+
+        for i, term in enumerate(terms):
+            neg = False
+            pos_term = term
+            if getattr(term, 'is_MatMul', False):
+                coeff, matrices = term.as_coeff_matrices()
+                try:
+                    is_neg = coeff.is_Number and coeff.is_negative
+                except AttributeError:
+                    is_neg = False
+                if is_neg:
+                    neg = True
+                    abs_coeff = -coeff
+                    if abs_coeff == 1:
+                        pos_term = MatMul(*matrices, evaluate=False)
+                    else:
+                        pos_term = MatMul(abs_coeff, *matrices, evaluate=False)
+            elif term.is_Number and term < 0:
+                neg = True
+                pos_term = -term
+
+            if neg:
+                pform = self._print(pos_term)
+                pforms.append(pretty_negative(pform, i))
+            else:
+                pforms.append(self._print(term))
+
+        return prettyForm.__add__(*pforms)
 
     def _print_MatMul(self, expr):
         args = list(expr.args)
