@@ -1748,3 +1748,11 @@ def test_latex_degree():
     assert latex(expr2) == r"x ^\circ"
     expr3 = cos(x*degree + 90*degree)
     assert latex(expr3) == r'\cos{\left (x ^\circ + 90 ^\circ \right )}'
+
+def test_matadd_subtraction_latex():
+    from sympy import MatrixSymbol
+    A = MatrixSymbol('A', 2, 2)
+    B = MatrixSymbol('B', 2, 2)
+    s = latex(A - A*B - B)
+    assert '+ -' not in s
+    assert '-1 ' not in s

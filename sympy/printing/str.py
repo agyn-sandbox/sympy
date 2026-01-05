@@ -312,8 +312,45 @@ class StrPrinter(Printer):
             for arg in expr.args])
 
     def _print_MatAdd(self, expr):
-        return ' + '.join([self.parenthesize(arg, precedence(expr))
-            for arg in expr.args])
+        # Mirror _print_Add behavior for matrices: render negative terms
+        # as subtraction rather than "+ -X" or explicit "(-1)*X".
+        # Preserve term order consistent with Add.
+        if self.order == 'none':
+            terms = list(expr.args)
+        else:
+            terms = self._as_ordered_terms(expr)
+
+        PREC = precedence(expr)
+        from sympy.matrices.expressions.matmul import MatMul
+        out = []
+        for i, term in enumerate(terms):
+            neg = False
+            pos_term = term
+            # Detect a leading negative coefficient in matrix products
+            if getattr(term, 'is_MatMul', False):
+                coeff, matrices = term.as_coeff_matrices()
+                is_neg = coeff.is_Number and coeff.is_negative
+                if is_neg:
+                    neg = True
+                    # Strip the sign from the coefficient
+                    abs_coeff = -coeff
+                    if abs_coeff == 1:
+                        pos_term = MatMul(*matrices, evaluate=False)
+                    else:
+                        pos_term = MatMul(abs_coeff, *matrices, evaluate=False)
+            elif term.is_Number and term < 0:
+                neg = True
+                pos_term = -term
+
+            # Print the positive form of the term with parentheses if needed
+            t = self.parenthesize(pos_term, PREC)
+            if i == 0:
+                prefix = '-' if neg else ''
+            else:
+                prefix = ' - ' if neg else ' + '
+            out.append(prefix + t)
+
+        return ''.join(out)
 
     def _print_NaN(self, expr):
         return 'nan'

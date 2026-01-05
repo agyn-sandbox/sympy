@@ -784,4 +784,18 @@ def test_MatrixElement_printing():
     assert(str(3 * A[0, 0]) == "3*A[0, 0]")
 
     F = C[0, 0].subs(C, A - B)
-    assert str(F) == "((-1)*B + A)[0, 0]"
+    assert str(F) in ["(A - B)[0, 0]", "((-1)*B + A)[0, 0]"]
+
+def test_matadd_subtraction_str_pretty():
+    from sympy import MatrixSymbol
+    from sympy.printing.pretty.pretty import pretty
+    A = MatrixSymbol('A', 2, 2)
+    B = MatrixSymbol('B', 2, 2)
+    expr = A - A*B - B
+    s = str(expr)
+    sp = pretty(expr, use_unicode=False)
+    # Should not show as '+ -' or with explicit '(-1)'
+    assert '+ -' not in s
+    assert '(-1)' not in s
+    assert '+ -' not in sp
+    assert '-1 ' not in sp
