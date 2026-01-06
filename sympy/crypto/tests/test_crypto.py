@@ -246,13 +246,21 @@ def test_encode_morse():
     assert encode_morse(' ') == '||'
     assert encode_morse(' ', sep='`') == '``'
     assert encode_morse(' ', sep='``') == '````'
+    assert encode_morse('1') == '.----'
     assert encode_morse('!@#$%^&*()_+') == '-.-.--|.--.-.|...-..-|-.--.|-.--.-|..--.-|.-.-.'
 
 
 def test_decode_morse():
     assert decode_morse('-.-|.|-.--') == 'KEY'
     assert decode_morse('.-.|..-|-.||') == 'RUN'
+    assert decode_morse('.----') == '1'
     raises(KeyError, lambda: decode_morse('.....----'))
+
+
+def test_morse_digits_roundtrip():
+    msg = '0123456789'
+    encoded = encode_morse(msg)
+    assert decode_morse(encoded) == msg
 
 
 def test_lfsr_sequence():
