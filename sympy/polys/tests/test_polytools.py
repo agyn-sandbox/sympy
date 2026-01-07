@@ -2298,7 +2298,8 @@ def test_sqf():
     raises(ComputationFailed, lambda: sqf_part(4))
 
     assert sqf(1) == 1
-    assert sqf_list(1) == (1, [])
+    with raises(ValueError, match="sqf_list expects a univariate polynomial of degree >= 1; got constant"):
+        sqf_list(1)
 
     assert sqf((2*x**2 + 2)**7) == 128*(x**2 + 1)**7
 
@@ -2329,6 +2330,41 @@ def test_sqf():
 
     assert sqf(f) == (x + 1)**40000000000
     assert sqf_list(f) == (1, [(x + 1, 40000000000)])
+
+
+def test_sqf_list_univariate_polynomial():
+    f = x**5 - 2*x**4 - 2*x**3 + 4*x**2 + x - 2
+
+    coeff, factors = sqf_list(f)
+    assert coeff == 1
+    assert factors == [(x - 2, 1), (x**2 - 1, 2)]
+
+    coeff_poly, factors_poly = sqf_list(f, polys=True)
+    assert coeff_poly == 1
+    assert factors_poly == [
+        (Poly(x - 2, x), 1),
+        (Poly(x**2 - 1, x), 2),
+    ]
+
+
+def test_sqf_list_aggregates_same_multiplicity():
+    f = (x**2 + 1) * (x - 1)**2 * (x - 2)**3 * (x - 3)**3
+
+    coeff, factors = sqf_list(f)
+    assert coeff == 1
+    assert factors == [
+        (x**2 + 1, 1),
+        (x - 1, 2),
+        (x**2 - 5*x + 6, 3),
+    ]
+
+    coeff_poly, factors_poly = sqf_list(f, polys=True)
+    assert coeff_poly == 1
+    assert factors_poly == [
+        (Poly(x**2 + 1, x), 1),
+        (Poly(x - 1, x), 2),
+        (Poly(x**2 - 5*x + 6, x), 3),
+    ]
 
 
 def test_factor():
@@ -3273,7 +3309,8 @@ def test_to_rational_coeffs():
 def test_factor_terms():
     # issue 7067
     assert factor_list(x*(x + y)) == (1, [(x, 1), (x + y, 1)])
-    assert sqf_list(x*(x + y)) == (1, [(x, 1), (x + y, 1)])
+    with raises(ValueError, match="sqf_list expects a univariate polynomial; got multivariate input"):
+        sqf_list(x*(x + y))
 
 
 def test_as_list():
