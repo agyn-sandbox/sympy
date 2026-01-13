@@ -522,12 +522,12 @@ class Permutation(Basic):
     >>> [p(q(i)) for i in range(p.size)]
     [1, 2, 0]
 
-    Disjoint Cycle Notation
-    -----------------------
+    Cycle Notation
+    --------------
 
-    In disjoint cycle notation, only the elements that have shifted are
-    indicated. In the above case, the 2 and 1 switched places. This can
-    be entered in two ways:
+    In cycle notation, only the elements that have shifted are indicated.
+    In the above case, the 2 and 1 switched places. This can be entered in
+    two ways:
 
     >>> Permutation(1, 2) == Permutation([[1, 2]]) == p
     True
@@ -537,19 +537,24 @@ class Permutation(Basic):
     >>> Permutation(1,2,3) == Permutation(2,3,1) == Permutation(3,1,2)
     True
 
-    The disjoint cycle notation is convenient when representing permutations
-    that have several cycles in them:
+    Cycle notation is convenient when representing permutations that have
+    several cycles in them:
 
     >>> Permutation(1, 2)(3, 5) == Permutation([[1, 2], [3, 5]])
     True
 
     It also provides some economy in entry when computing products of
-    permutations that are written in disjoint cycle notation:
+    permutations that are written in cycle notation:
 
     >>> Permutation(1, 2)(1, 3)(2, 3)
     Permutation([0, 3, 2, 1])
     >>> _ == Permutation([[1, 2]])*Permutation([[1, 3]])*Permutation([[2, 3]])
     True
+
+    Cycles supplied to ``Permutation`` need not be disjoint. When successive
+    cycles share elements, they are composed left-to-right, just as repeated
+    ``Cycle`` calls would be. Symbols may not repeat within a single cycle,
+    however; doing so still raises a ``ValueError``.
 
     Entering a singleton in a permutation is a way to indicate the size of the
     permutation. The ``size`` keyword can also be used.
