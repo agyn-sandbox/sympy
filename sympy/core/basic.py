@@ -313,7 +313,7 @@ class Basic(with_metaclass(ManagedProperties)):
             try:
                 other = _sympify(other)
             except SympifyError:
-                return False    # sympy != other
+                return NotImplemented
 
             if type(self) != type(other):
                 return False
@@ -329,7 +329,10 @@ class Basic(with_metaclass(ManagedProperties)):
 
            but faster
         """
-        return not self.__eq__(other)
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        return not result
 
     def dummy_eq(self, other, symbol=None):
         """

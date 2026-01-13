@@ -1253,12 +1253,12 @@ class Float(Number):
             try:
                 ompf = o._as_mpf_val(self._prec)
             except ValueError:
-                return False
+                return NotImplemented
             return bool(mlib.mpf_eq(self._mpf_, ompf))
         try:
             other = _sympify(other)
         except SympifyError:
-            return False    # sympy != other  -->  not ==
+            return NotImplemented
         if isinstance(other, NumberSymbol):
             if other.is_irrational:
                 return False
@@ -1276,7 +1276,10 @@ class Float(Number):
         return False    # Float != non-Number
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        return not result
 
     def __gt__(self, other):
         try:
@@ -1719,7 +1722,7 @@ class Rational(Number):
         try:
             other = _sympify(other)
         except SympifyError:
-            return False    # sympy != other  -->  not ==
+            return NotImplemented
         if isinstance(other, NumberSymbol):
             if other.is_irrational:
                 return False
@@ -1734,7 +1737,10 @@ class Rational(Number):
         return False
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        return not result
 
     def __gt__(self, other):
         try:
@@ -2112,7 +2118,10 @@ class Integer(Rational):
         return Rational.__eq__(self, other)
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        return not result
 
     def __gt__(self, other):
         try:
@@ -3339,7 +3348,7 @@ class NumberSymbol(AtomicExpr):
         try:
             other = _sympify(other)
         except SympifyError:
-            return False    # sympy != other  -->  not ==
+            return NotImplemented
         if self is other:
             return True
         if isinstance(other, Number) and self.is_irrational:
@@ -3348,7 +3357,10 @@ class NumberSymbol(AtomicExpr):
         return False    # NumberSymbol != non-(Number|self)
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        return not result
 
     def __lt__(self, other):
         try:

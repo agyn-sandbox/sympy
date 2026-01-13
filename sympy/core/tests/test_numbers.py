@@ -24,6 +24,45 @@ def same_and_same_prec(a, b):
     return a == b and a._prec == b._prec
 
 
+def _assert_symmetric_comparison(value):
+    class Mirror:
+        def __init__(self, target):
+            self._target = target
+
+        def __eq__(self, other):
+            if other == self._target:
+                return True
+            return NotImplemented
+
+        def __ne__(self, other):
+            if other == self._target:
+                return False
+            return NotImplemented
+
+    mirror = Mirror(value)
+
+    assert (mirror == value) is True
+    assert (value == mirror) is True
+    assert (mirror != value) is False
+    assert (value != mirror) is False
+
+
+def test_float_comparison_delegates_to_external():
+    _assert_symmetric_comparison(Float('2.5'))
+
+
+def test_rational_comparison_delegates_to_external():
+    _assert_symmetric_comparison(Rational(3, 7))
+
+
+def test_integer_comparison_delegates_to_external():
+    _assert_symmetric_comparison(Integer(5))
+
+
+def test_numbersymbol_comparison_delegates_to_external():
+    _assert_symmetric_comparison(pi)
+
+
 def test_integers_cache():
     python_int = 2**65 + 3175259
 
