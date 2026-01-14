@@ -63,6 +63,28 @@ def test_cmp_bug2():
     assert (Symbol != t)
 
 
+def test_basic_comparison_delegates_to_external():
+    x = Symbol('x')
+
+    class Mirror:
+        def __eq__(self, other):
+            if other == x:
+                return True
+            return NotImplemented
+
+        def __ne__(self, other):
+            if other == x:
+                return False
+            return NotImplemented
+
+    mirror = Mirror()
+
+    assert (mirror == x) is True
+    assert (x == mirror) is True
+    assert (mirror != x) is False
+    assert (x != mirror) is False
+
+
 def test_cmp_issue_4357():
     """ Check that Basic subclasses can be compared with sympifiable objects.
 
