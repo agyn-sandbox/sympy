@@ -24,27 +24,65 @@ def same_and_same_prec(a, b):
     return a == b and a._prec == b._prec
 
 
+class _ComparisonMirror:
+    def __init__(self, target):
+        self._target = target
+
+    def _matches(self, other):
+        return other == self._target
+
+    def __eq__(self, other):
+        if self._matches(other):
+            return True
+        return NotImplemented
+
+    def __ne__(self, other):
+        if self._matches(other):
+            return False
+        return NotImplemented
+
+    def __lt__(self, other):
+        if self._matches(other):
+            return True
+        return NotImplemented
+
+    def __le__(self, other):
+        if self._matches(other):
+            return True
+        return NotImplemented
+
+    def __gt__(self, other):
+        if self._matches(other):
+            return False
+        return NotImplemented
+
+    def __ge__(self, other):
+        if self._matches(other):
+            return False
+        return NotImplemented
+
+
 def _assert_symmetric_comparison(value):
-    class Mirror:
-        def __init__(self, target):
-            self._target = target
-
-        def __eq__(self, other):
-            if other == self._target:
-                return True
-            return NotImplemented
-
-        def __ne__(self, other):
-            if other == self._target:
-                return False
-            return NotImplemented
-
-    mirror = Mirror(value)
+    mirror = _ComparisonMirror(value)
 
     assert (mirror == value) is True
     assert (value == mirror) is True
     assert (mirror != value) is False
     assert (value != mirror) is False
+
+
+def _assert_symmetric_ordering(value):
+    mirror = _ComparisonMirror(value)
+
+    assert (mirror < value) is True
+    assert (mirror <= value) is True
+    assert (mirror > value) is False
+    assert (mirror >= value) is False
+
+    assert (value > mirror) is True
+    assert (value >= mirror) is True
+    assert (value < mirror) is False
+    assert (value <= mirror) is False
 
 
 def test_float_comparison_delegates_to_external():
@@ -61,6 +99,30 @@ def test_integer_comparison_delegates_to_external():
 
 def test_numbersymbol_comparison_delegates_to_external():
     _assert_symmetric_comparison(pi)
+
+
+def test_float_ordering_delegates_to_external():
+    _assert_symmetric_ordering(Float('2.5'))
+
+
+def test_rational_ordering_delegates_to_external():
+    _assert_symmetric_ordering(Rational(3, 7))
+
+
+def test_integer_ordering_delegates_to_external():
+    _assert_symmetric_ordering(Integer(5))
+
+
+def test_numbersymbol_ordering_delegates_to_external():
+    _assert_symmetric_ordering(pi)
+
+
+def test_infinity_ordering_delegates_to_external():
+    _assert_symmetric_ordering(oo)
+
+
+def test_negative_infinity_ordering_delegates_to_external():
+    _assert_symmetric_ordering(-oo)
 
 
 def test_integers_cache():
