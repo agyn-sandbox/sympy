@@ -63,6 +63,20 @@ class Set(Basic):
             infimum = S.Infinity
         return infimum
 
+    @staticmethod
+    def _partition_finite_difference(subtracting, finite_set):
+        known_not_in = []
+        unknown = []
+        for element in finite_set:
+            membership = sympify(subtracting.contains(element))
+            if membership is S.true:
+                continue
+            if membership is S.false:
+                known_not_in.append(element)
+            else:
+                unknown.append(element)
+        return tuple(known_not_in), tuple(unknown)
+
     def union(self, other):
         """
         Returns the union of 'self' and 'other'.
@@ -217,7 +231,15 @@ class Set(Basic):
             return S.EmptySet
 
         elif isinstance(other, FiniteSet):
-            return FiniteSet(*[el for el in other if self.contains(el) != True])
+            known_not_in, unknown = self._partition_finite_difference(self, other)
+            if unknown:
+                residual = Complement(FiniteSet(*unknown), self, evaluate=False)
+                if known_not_in:
+                    return Union(FiniteSet(*known_not_in), residual, evaluate=False)
+                return residual
+            if known_not_in:
+                return FiniteSet(*known_not_in)
+            return S.EmptySet
 
     def symmetric_difference(self, other):
         """
@@ -1575,8 +1597,7 @@ class Intersection(Set):
             *res, evaluate=False) if res else S.EmptySet
         if unk:
             symbolic_s_list = [x for x in s if x.has(Symbol)]
-            non_symbolic_s = s - FiniteSet(
-                *symbolic_s_list, evaluate=False)
+            non_symbolic_s = [x for x in s if not x.has(Symbol)]
             while fs_args:
                 v = fs_args.pop()
                 if all(i == j for i, j in zip_longest(
@@ -1952,20 +1973,15 @@ class FiniteSet(Set, EvalfMixin):
                 return None
 
         elif isinstance(other, FiniteSet):
-            unk = []
-            for i in self:
-                c = sympify(other.contains(i))
-                if c is not S.true and c is not S.false:
-                    unk.append(i)
-            unk = FiniteSet(*unk)
-            if unk == self:
-                return
-            not_true = []
-            for i in other:
-                c = sympify(self.contains(i))
-                if c is not S.true:
-                    not_true.append(i)
-            return Complement(FiniteSet(*not_true), unk)
+            known_not_in, unknown = self._partition_finite_difference(self, other)
+            if unknown:
+                residual = Complement(FiniteSet(*unknown), self, evaluate=False)
+                if known_not_in:
+                    return Union(FiniteSet(*known_not_in), residual, evaluate=False)
+                return residual
+            if known_not_in:
+                return FiniteSet(*known_not_in)
+            return S.EmptySet
 
         return Set._complement(self, other)
 

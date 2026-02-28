@@ -5,7 +5,8 @@ from sympy.sets.sets import (FiniteSet, Interval, imageset, EmptySet, Union,
                              Intersection)
 from sympy.simplify.simplify import simplify
 from sympy import (S, Symbol, Lambda, symbols, cos, sin, pi, oo, Basic,
-                   Rational, sqrt, tan, log, exp, Abs, I, Tuple, eye)
+                   Rational, sqrt, tan, log, exp, Abs, I, Tuple, eye,
+                   re, im, arg)
 from sympy.utilities.iterables import cartes
 from sympy.utilities.pytest import XFAIL, raises
 from sympy.abc import x, y, z, t
@@ -517,6 +518,19 @@ def test_ComplexRegion_contains():
     assert 0 in c3
     assert 1 + I not in c3
     assert 1 - I not in c3
+
+    z = Symbol('z')
+    rectangular_condition = c1.contains(z)
+    assert rectangular_condition.is_Boolean
+    assert rectangular_condition not in (S.true, S.false)
+    assert rectangular_condition.has(re(z))
+    assert rectangular_condition.has(im(z))
+
+    polar_condition = c3.contains(z)
+    assert polar_condition.is_Boolean
+    assert polar_condition not in (S.true, S.false)
+    assert polar_condition.has(Abs(z))
+    assert polar_condition.has(arg(z))
 
 
 def test_ComplexRegion_intersect():
