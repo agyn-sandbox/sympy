@@ -677,6 +677,19 @@ def test_latex_subs():
         x, y), (1, 2))) == r'\left. x y \right|_{\substack{ x=1\\ y=2 }}'
 
 
+def test_latex_subs_parenthesize_expr():
+    assert latex(Subs(-x + y, (x,), (1,))) == \
+        r'\left. \left(- x + y\right) \right|_{\substack{ x=1 }}'
+    assert latex(Subs(x**2, (x,), (1,))) == \
+        r'\left. x^{2} \right|_{\substack{ x=1 }}'
+    assert latex(Subs(sin(x), (x,), (0,))) == \
+        r'\left. \sin{\left(x \right)} \right|_{\substack{ x=0 }}'
+    assert latex(3*Subs(-x + y, (x,), (1,))) == \
+        r'3 \left. \left(- x + y\right) \right|_{\substack{ x=1 }}'
+    assert latex(Subs(Subs(-x + y, (x,), (1,)), (y,), (2,))) == \
+        r'\left. \left. \left(- x + y\right) \right|_{\substack{ x=1 }} \right|_{\substack{ y=2 }}'
+
+
 def test_latex_integrals():
     assert latex(Integral(log(x), x)) == r"\int \log{\left(x \right)}\, dx"
     assert latex(Integral(x**2, (x, 0, 1))) == \

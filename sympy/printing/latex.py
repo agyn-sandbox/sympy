@@ -698,13 +698,36 @@ class LatexPrinter(Printer):
 
     def _print_Subs(self, subs):
         expr, old, new = subs.args
-        latex_expr = self._print(expr)
-        latex_old = (self._print(e) for e in old)
-        latex_new = (self._print(e) for e in new)
-        latex_subs = r'\\ '.join(
-            e[0] + '=' + e[1] for e in zip(latex_old, latex_new))
-        return r'\left. %s \right|_{\substack{ %s }}' % (latex_expr,
-                                                         latex_subs)
+        latex_expr = self.parenthesize(expr, PRECEDENCE["Mul"], strict=True)
+        latex_pairs = list(zip(
+            (self._print(e) for e in old),
+            (self._print(e) for e in new)))
+        group_sizes = getattr(subs, '_latex_subs_group_sizes',
+                              (len(latex_pairs),))
+        if sum(group_sizes) != len(latex_pairs) or not group_sizes:
+            group_sizes = (len(latex_pairs),)
+
+        def _format_group(pairs):
+            return r'\\ '.join(f'{o}={n}' for o, n in pairs)
+
+        if len(group_sizes) == 1:
+            latex_subs = _format_group(latex_pairs)
+            return r'\left. %s \right|_{\substack{ %s }}' % (
+                latex_expr, latex_subs)
+
+        result = latex_expr
+        index = 0
+        for size in group_sizes:
+            if size <= 0:
+                continue
+            group = latex_pairs[index:index + size]
+            index += size
+            if not group:
+                continue
+            latex_group = _format_group(group)
+            result = r'\left. %s \right|_{\substack{ %s }}' % (
+                result, latex_group)
+        return result
 
     def _print_Integral(self, expr):
         tex, symbols = "", []

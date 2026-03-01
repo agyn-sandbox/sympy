@@ -2147,6 +2147,7 @@ class Subs(Expr):
         if not is_sequence(variables, Tuple):
             variables = [variables]
         variables = Tuple(*variables)
+        current_group_size = len(variables)
 
         if has_dups(variables):
             repeated = [str(v) for v, i in Counter(variables).items() if i > 1]
@@ -2164,13 +2165,17 @@ class Subs(Expr):
         if not point:
             return sympify(expr)
 
-        # denest
         if isinstance(expr, Subs):
+            prev_groups = getattr(expr, '_latex_subs_group_sizes',
+                                  (len(expr.variables),))
             variables = expr.variables + variables
             point = expr.point + point
             expr = expr.expr
         else:
+            prev_groups = ()
             expr = sympify(expr)
+
+        group_sizes = prev_groups + (current_group_size,)
 
         # use symbols with names equal to the point value (with prepended _)
         # to give a variable-independent expression
@@ -2202,6 +2207,7 @@ class Subs(Expr):
             break
 
         obj = Expr.__new__(cls, expr, Tuple(*variables), point)
+        obj._latex_subs_group_sizes = group_sizes
         obj._expr = expr.xreplace(dict(reps))
         return obj
 
