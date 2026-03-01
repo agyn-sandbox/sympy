@@ -1,3 +1,4 @@
+from sympy import E, evaluate
 from sympy.core.basic import Basic
 from sympy.core.numbers import (I, Rational, pi)
 from sympy.core.singleton import S
@@ -162,6 +163,19 @@ def test_point():
 
     # test affine_rank
     assert Point.affine_rank() == -1
+
+
+def test_point2d_evaluate_false():
+    assert S('Point2D(Integer(1),Integer(2))') == Point2D(1, 2)
+    assert S('Point2D(Integer(1),Integer(2))', evaluate=False) == Point2D(1, 2)
+
+    with evaluate(False):
+        assert S('Point2D(Integer(1),Integer(2))') == Point2D(1, 2)
+        raises(ValueError, lambda: S('Point2D(Integer(1), I)'))
+        raises(ValueError, lambda: S('Point2D(log(-1), Integer(1))'))
+        raises(ValueError, lambda: S('Point2D(E**I, Integer(0))'))
+
+    raises(ValueError, lambda: Point2D(1, I))
 
 
 def test_point3D():
